@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+  <Transactions>
+    <Transaction>2017.02.13 23:29:58.990,=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Unit2.pas</Transaction>
+    <Transaction>2017.02.14 09:31:04.867,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\AndroidListBoxTest.pas=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Unit2.pas</Transaction>
+    <Transaction>2017.02.14 09:31:04.867,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\AndroidListBoxTest.fmx=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Unit2.fmx</Transaction>
+    <Transaction>2017.02.14 09:31:15.580,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\AndroidListBoxTestProj.dproj=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Project2.dproj</Transaction>
+  </Transactions>
+</BorlandProject>
