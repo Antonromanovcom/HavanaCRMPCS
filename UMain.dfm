@@ -719,7 +719,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = TabSheet3
+    ActivePage = TabSheet1
     TabOrder = 0
     object TabSheet3: TTabSheet
       Caption = #1042#1093#1086#1076
@@ -4322,9 +4322,9 @@ object Form1: TForm1
       object DBEdit6: TDBEdit
         Left = 544
         Top = 320
-        Width = 34
+        Width = 52
         Height = 21
-        DataField = 'User'
+        DataField = 'name'
         DataSource = UniDataSource1
         TabOrder = 0
         Visible = False
@@ -5873,7 +5873,7 @@ object Form1: TForm1
     Top = 417
     Width = 34
     Height = 21
-    DataField = 'Customer'
+    DataField = 'client'
     DataSource = UniDataSource5
     TabOrder = 13
     Visible = False
@@ -5930,7 +5930,7 @@ object Form1: TForm1
   object UniQuery2: TUniQuery
     Connection = UniConnection1
     SQL.Strings = (
-      'SELECT * FROM CRM.STATUS;')
+      'SELECT * FROM order_status;')
     Left = 456
     Top = 16
   end
@@ -5947,7 +5947,7 @@ object Form1: TForm1
   object UniQuery3: TUniQuery
     Connection = UniConnection1
     SQL.Strings = (
-      'SELECT * FROM CRM.From_Type_Table;')
+      'SELECT * FROM whereclientfrom;')
     Left = 672
     Top = 80
   end
@@ -5963,17 +5963,17 @@ object Form1: TForm1
       'MySQL.Charset=UTF8'
       'MySQL.UseUnicode=True')
     Username = 'postgres'
-    Server = '84.47.161.121'
+    Server = 'localhost'
     Connected = True
     LoginPrompt = False
     Left = 736
     Top = 88
-    EncryptedPassword = '8FFF90FF8CFF8BFF98FF8DFF9AFF8CFF'
+    EncryptedPassword = 'CEFFC8FFCBFFCEFF'
   end
   object UniQuery4: TUniQuery
     Connection = UniConnection1
     SQL.Strings = (
-      'SELECT * from users where users.login = '#39'1'#39' AND pwd = '#39'1'#39)
+      'SELECT * from users where users.login = '#39'1'#39' AND users.pwd = '#39'1'#39)
     Left = 704
     Top = 424
   end
@@ -5996,7 +5996,7 @@ object Form1: TForm1
   object UniQuery6: TUniQuery
     Connection = UniConnection1
     SQL.Strings = (
-      'SELECT * FROM Orders WHERE User=2')
+      'SELECT * FROM orders WHERE user_id=2')
     Left = 120
     Top = 8
   end

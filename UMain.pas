@@ -194,7 +194,7 @@ uses
     loginbefore: Boolean;
     loginglobal: String;
     passwordglobal: String;
-    UserID: Integer;
+    UserID: string;
     CustomerArr: array of Integer;
   FIsStartPage: Boolean;
     clientsRecCount: Integer;
@@ -547,7 +547,7 @@ begin
 
      //;
 
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
 //  UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
 
   UniQuery10.ExecSQL;
@@ -611,7 +611,7 @@ begin
 
 UniQuery11.Close;
 UniQuery11.SQL.Text :='SELECT * FROM `Users` WHERE ID = :userid';
-UniQuery11.ParamByName('userid').AsString := inttostr(UserID);
+UniQuery11.ParamByName('userid').AsString := UserID;
 UniQuery11.ExecSQL;
 
 userinfoNamelbl.Caption:='Имя пользователя:  ' + UniQuery11.FieldByName('Name').AsString;
@@ -678,7 +678,7 @@ begin
     'select MONTH(`OrderDate`) m, year(`OrderDate`) y, OrderStatus os, COUNT(OrderStatus) Count, STATUS_TYPE FROM Orders LEFT OUTER JOIN STATUS ON Orders.OrderStatus = STATUS.ID_STATUS WHERE year(`OrderDate`)=:cy AND USER=:userid GROUP BY  m, os ORDER BY m';
   // select MONTH(`OrderDate`) m, year(`OrderDate`) y, OrderStatus os, COUNT(OrderStatus) Count, STATUS_TYPE FROM Orders LEFT OUTER JOIN STATUS ON Orders.OrderStatus = STATUS.ID_STATUS WHERE year(`OrderDate`)='2017' AND USER=:userid GROUP BY  m, os ORDER BY m;
 
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
 
   UniQuery10.ExecSQL;
@@ -850,7 +850,7 @@ begin
   UniQuery10.SQL.Text :=
     'SELECT year(`OrderDate`) Y FROM Orders WHERE USER=:userid GROUP BY  y ORDER BY y';
 
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
   yearscount := UniQuery10.RecordCount;
 
@@ -858,7 +858,7 @@ begin
 
   UniQuery10.SQL.Text :=
     'SELECT year(OrderDate) d, OrderStatus os, COUNT(OrderStatus) s, STATUS_TYPE FROM Orders LEFT OUTER JOIN STATUS ON Orders.OrderStatus = STATUS.ID_STATUS WHERE User = :userid GROUP BY  d, os ORDER BY d';
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
 
   Last := '';
@@ -1017,7 +1017,7 @@ begin
 
   UniQuery10.SQL.Text :=
     'SELECT * FROM Orders  WHERE OrderStatus = 2 AND Orders.User = :userid AND (DATEDIFF((NOW()),(OrderRecieve)))>30';
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
 
   UniDataSource8.DataSet.Refresh;
@@ -1035,7 +1035,7 @@ begin
   UniQuery10.Close;
   UniQuery10.SQL.Text :=
     'SELECT Orders.OrderName, Orders.OrderStatus, Clients.Status, Clients.Name FROM Orders LEFT OUTER JOIN Clients ON Orders.Customer = Clients.ID_Clients WHERE Orders.User = :userid AND Orders.OrderStatus <> Clients.Status';
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
   UniDataSource8.DataSet.Refresh;
 
@@ -1052,7 +1052,7 @@ begin
   UniQuery10.SQL.Text :=
     'SELECT * FROM Orders  WHERE OrderStatus > 2 AND OrderStatus <> 6 AND OrderStatus <> 7   AND Orders.User = :userid AND (DATEDIFF((NOW()),(Orders.ChangeDate)))>60';
   // ;
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
   UniDataSource8.DataSet.Refresh;
 
@@ -1070,7 +1070,7 @@ begin
   UniQuery10.SQL.Text :=
     'SELECT * FROM Clients  WHERE Status > 2 AND Status <> 6 AND Status <> 7   AND User = :userid AND (DATEDIFF((NOW()),(Clients.EditDateTime)))>60';
   // ;
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
   UniDataSource8.DataSet.Refresh;
 
@@ -1110,7 +1110,7 @@ begin
   for j := 1 to statusRecCount do
   begin
 
-    sItem := UniDataSource2.DataSet.FieldByName('STATUS_TYPE').AsString;
+    sItem := UniDataSource2.DataSet.FieldByName('status').AsString;
     sItemHelp := Format(sItem, [j]);
     // ShowMessage(sItemHelp);
     UniDataSource2.DataSet.Next;
@@ -1125,7 +1125,7 @@ begin
   for z := 1 to fromRecCount do
   begin
 
-    sItem2 := UniDataSource3.DataSet.FieldByName('FROM_TYPE').AsString;
+    sItem2 := UniDataSource3.DataSet.FieldByName('source').AsString;
     // ShowMessage(inttostr(z) + ' = ' + sItem2);
     sItemHelp := Format(sItem, [z]);
     // ShowMessage(sItemHelp);
@@ -1143,7 +1143,7 @@ begin
   for j := 1 to statusRecCount do
   begin
 
-    sItem := UniDataSource2.DataSet.FieldByName('STATUS_TYPE').AsString;
+    sItem := UniDataSource2.DataSet.FieldByName('status').AsString;
     sItemHelp := Format(sItem, [j]);
 
     UniDataSource2.DataSet.Next;
@@ -1152,8 +1152,8 @@ begin
 
   // =============================== COMBO BOX CLIENT FILLING ==========
 
-  UniQuery8.SQL.Text := 'SELECT * FROM CRM.Clients WHERE User = :userid;';
-  UniQuery8.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery8.SQL.Text := 'SELECT * FROM clients WHERE user_id = :userid;';
+  UniQuery8.ParamByName('userid').AsString := UserID;
   UniQuery8.Execute;
 
   clientsRecCount := UniDataSource6.DataSet.RecordCount;
@@ -1219,8 +1219,8 @@ MainTab.TabIndex := 1;
 
   // =============================== COMBO BOX JOBS TYPE FILLING ==========
 
-  UniQuery9.SQL.Text := 'SELECT * FROM CRM.JOBSTYPE;';
-  // UniQuery8.ParamByName('userid').AsString := IntToStr(UserID);
+  UniQuery9.SQL.Text := 'SELECT * FROM ordertypes;';
+  // UniQuery8.ParamByName('userid').AsString := UserID;
   UniQuery9.Execute;
 
   jobstypeRecCount := UniDataSource7.DataSet.RecordCount;
@@ -1231,7 +1231,7 @@ MainTab.TabIndex := 1;
   for j := 1 to jobstypeRecCount do
   begin
 
-    sItem := UniDataSource7.DataSet.FieldByName('Jobtype').AsString;
+    sItem := UniDataSource7.DataSet.FieldByName('type').AsString;
     sItemHelp := Format(sItem, [j]);
     // ShowMessage(sItemHelp);
     UniDataSource7.DataSet.Next;
@@ -1937,7 +1937,7 @@ begin
     UserTab.TabVisible := true;
 
     UniQuery1.SQL.Text := 'SELECT * FROM CRM.Clients WHERE User = :userid;';
-    UniQuery1.ParamByName('userid').AsInteger := UserID;
+    UniQuery1.ParamByName('userid').AsString := UserID;
     UniQuery1.Execute;
 
     UniQuery2.SQL.Text := 'SELECT * FROM CRM.STATUS;';
@@ -1947,7 +1947,7 @@ begin
     UniQuery3.Execute;
 
     UniQuery6.SQL.Text := 'SELECT * FROM Orders WHERE User = :userid;';
-    UniQuery6.ParamByName('userid').AsInteger := UserID;
+    UniQuery6.ParamByName('userid').AsString := UserID;
     UniQuery6.Execute;
 
     UniQuery7.SQL.Text := 'SELECT * FROM CRM.JOBSTYPE;';
@@ -1984,7 +1984,7 @@ begin
 UniQuery1.Close;
 UniQuery1.SQL.Text :=
       'SELECT * FROM Clients LEFT OUTER JOIN STATUS ON Clients.Status = STATUS.ID_STATUS LEFT OUTER JOIN From_Type_Table ON Clients.ClientFrom = From_Type_Table.ID_FROM WHERE User = :userid;';
-    UniQuery1.ParamByName('userid').AsInteger := UserID;
+    UniQuery1.ParamByName('userid').AsString := UserID;
     UniQuery1.Execute;
     clientsRecCountbefore:=clientsRecCount;
     clientsRecCount:=UniQuery1.RecordCount;
@@ -2049,7 +2049,7 @@ begin
   UniQuery10.SQL.Text :=
     'select year(`OrderDate`) year, SUM(OrderCost) cost FROM Orders WHERE USER= :userid GROUP BY  year ORDER BY year';
 
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
 
   Last := '';
@@ -2087,7 +2087,7 @@ begin
   UniQuery10.SQL.Text :=
     'select MONTH(`OrderDate`) M, SUM(OrderCost) cost FROM Orders WHERE USER=:userid AND year(`OrderDate`)=:cy GROUP BY  M ORDER BY M';
   UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
 
   Last := '';
@@ -2127,7 +2127,7 @@ begin
   UniQuery10.Close;
   UniQuery10.SQL.Text :=
     'UPDATE Orders SET Orders.OrderStatus=1 WHERE OrderStatus = 2 AND Orders.User = :userid AND (DATEDIFF((NOW()),(OrderRecieve)))>30';
-  UniQuery10.ParamByName('userid').AsString := inttostr(UserID);
+  UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
 
   UniQuery10.Close;
@@ -2161,7 +2161,7 @@ begin
       inttostr(CustomerArr[Customer.ItemIndex]);
     UniQuery5.ParamByName('ordJobsType').AsString :=
       inttostr((Jobstype.ItemIndex) + 1);
-    UniQuery5.ParamByName('userid').AsString := inttostr(UserID);
+    UniQuery5.ParamByName('userid').AsString := UserID;
     UniQuery5.ParamByName('ordDateRecieve').AsString :=
       FormatDateTime('yyyy-mm-dd ', (RecieveDate.Date));
     UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ',
@@ -2190,7 +2190,7 @@ begin
     UniQuery5.ParamByName('clName').AsString := eName.Text;
     UniQuery5.ParamByName('clPhone').AsString := ePhone.Text;
     UniQuery5.ParamByName('clEmail').AsString := eEmail.Text;
-    UniQuery5.ParamByName('userid').AsString := inttostr(UserID);
+    UniQuery5.ParamByName('userid').AsString := UserID;
     UniQuery5.ParamByName('buk').AsString := inttostr(BirthdayUnknow);
     UniQuery5.ParamByName('clStatus').AsString := inttostr(ComboBox1.ItemIndex+1);
     UniQuery5.ParamByName('clFrom').AsString := inttostr(ComboBox2.ItemIndex+1);
@@ -2577,7 +2577,7 @@ end;
   // =============================== COMBO BOX CLIENT FROM FILLING ==========
 
   UniQuery8.SQL.Text :='SELECT * FROM CRM.Clients WHERE User = :userid;';
-  UniQuery8.ParamByName('userid').AsString := IntToStr(UserID);
+  UniQuery8.ParamByName('userid').AsString := UserID;
 
   UniQuery8.Execute;
 
@@ -2617,7 +2617,7 @@ end;
   // =============================== COMBO BOX JOBS TYPE FILLING ==========
 
   UniQuery9.SQL.Text :='SELECT * FROM CRM.JOBSTYPE;';
-  //UniQuery8.ParamByName('userid').AsString := IntToStr(UserID);
+  //UniQuery8.ParamByName('userid').AsString := UserID;
   UniQuery9.Execute;
 
   jobstypeRecCount:= UniDataSource7.DataSet.RecordCount;
@@ -2719,7 +2719,7 @@ begin
     // =============================== COMBO BOX CLIENT FROM FILLING ==========
 
     UniQuery8.SQL.Text :='SELECT * FROM CRM.Clients WHERE User = :userid;';
-    UniQuery8.ParamByName('userid').AsString := IntToStr(UserID);
+    UniQuery8.ParamByName('userid').AsString := UserID;
 
     UniQuery8.Execute;
 
@@ -2759,7 +2759,7 @@ begin
     // =============================== COMBO BOX JOBS TYPE FILLING ==========
 
     UniQuery9.SQL.Text :='SELECT * FROM CRM.JOBSTYPE;';
-    //UniQuery8.ParamByName('userid').AsString := IntToStr(UserID);
+    //UniQuery8.ParamByName('userid').AsString := UserID;
     UniQuery9.Execute;
 
     jobstypeRecCount:= UniDataSource7.DataSet.RecordCount;
@@ -2859,15 +2859,20 @@ StringGrid3.RowHeights[0]:=70;
       UniQuery4.Next;
     end;
 
-    UserID := UniQuery4.Fields[0].value;
+//if (UniQuery4.Fields[0].value = Null or UniQuery4.Fields[0].value=0) then UserID :='0';
+    UserID := UniQuery4.Fields[0].AsString;
+
+    if (UserID = '') or (UserID=Null) then UserID:='0';
+
 
     TabSheet2.TabVisible := true;
     TabSheet1.TabVisible := true;
     TabSheet3.TabVisible := FALSE;
 
+//      'SELECT * FROM Clients LEFT OUTER JOIN STATUS ON Clients.Status = STATUS.ID_STATUS LEFT OUTER JOIN From_Type_Table ON Clients.ClientFrom = From_Type_Table.ID_FROM WHERE User = :userid;';
     UniQuery1.SQL.Text :=
-      'SELECT * FROM Clients LEFT OUTER JOIN STATUS ON Clients.Status = STATUS.ID_STATUS LEFT OUTER JOIN From_Type_Table ON Clients.ClientFrom = From_Type_Table.ID_FROM WHERE User = :userid;';
-    UniQuery1.ParamByName('userid').AsInteger := UserID;
+      'SELECT * FROM clients WHERE user_id = :userid;';
+    UniQuery1.ParamByName('userid').AsLargeInt := StrToInt64(UserID);
     UniQuery1.Execute;
 
     clientsRecCount:=UniQuery1.RecordCount;
@@ -2876,15 +2881,15 @@ StringGrid3.RowHeights[0]:=70;
     signinTime := Time;
     finalsigninDate := FormatDateTime('yyyy-mm-dd ', signinDate);
 
-    UniQuery5.SQL.Text :=
-      'UPDATE users SET LastVisitDate = :newdate WHERE users.ID = :uID;';
-    UniQuery5.ParamByName('uID').AsInteger := UserID;
-    UniQuery5.ParamByName('newdate').Value := Now;
-    UniQuery5.ParamByName('newtime').AsString := TimeToStr(signinTime);
-    UniQuery5.Execute;
+   // UniQuery5.SQL.Text :=
+   //   'UPDATE users SET LastVisitDate = :newdate WHERE users.ID = :uID;';
+   // UniQuery5.ParamByName('uID').AsString := UserID;
+   // UniQuery5.ParamByName('newdate').Value := Now;
+   // UniQuery5.ParamByName('newtime').AsString := TimeToStr(signinTime);
+   // UniQuery5.Execute;
 
-    UniQuery6.SQL.Text := 'SELECT * FROM Orders WHERE User=:uID;';
-    UniQuery6.ParamByName('uID').AsInteger := UserID;
+    UniQuery6.SQL.Text := 'SELECT * FROM orders WHERE user_id=:uID;';
+    UniQuery6.ParamByName('uID').AsString := UserID;
     UniQuery6.Execute;
 
 //clientsRecCount:=UniQuery6.RecordCount;
