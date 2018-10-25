@@ -719,7 +719,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = TabSheet1
+    ActivePage = UserTab
     TabOrder = 0
     object TabSheet3: TTabSheet
       Caption = #1042#1093#1086#1076
@@ -4311,6 +4311,7 @@ object Form1: TForm1
         Width = 82
         Height = 13
         Caption = #1058#1077#1082#1091#1097#1080#1081' '#1089#1090#1072#1090#1091#1089
+        Enabled = False
       end
       object clntFromlbl: TLabel
         Left = 24
@@ -4363,6 +4364,7 @@ object Form1: TForm1
         Top = 222
         Width = 733
         Height = 21
+        Enabled = False
         TabOrder = 5
         Text = 'ComboBox1'
       end
@@ -4389,6 +4391,7 @@ object Form1: TForm1
         Width = 361
         Height = 17
         Caption = #1071' '#1085#1072' '#1089#1072#1084#1086#1084' '#1076#1077#1083#1077' '#1085#1077' '#1079#1085#1072#1102' '#1082#1086#1075#1076#1072' '#1091' '#1082#1083#1080#1077#1085#1090#1072' '#1044#1077#1085#1100' '#1056#1086#1078#1076#1077#1085#1080#1103
+        Enabled = False
         TabOrder = 8
       end
     end
@@ -4423,7 +4426,7 @@ object Form1: TForm1
             Font.Quality = fqClearType
             Title.Alignment = taCenter
             Title.Caption = #1048#1084#1103
-            Width = 150
+            Width = 350
             Visible = True
           end
           item
@@ -4450,16 +4453,6 @@ object Form1: TForm1
             Title.Alignment = taCenter
             Title.Caption = #1044#1072#1090#1072' '#1088#1086#1078#1076#1077#1085#1080#1103
             Width = 90
-            Visible = True
-          end
-          item
-            Alignment = taCenter
-            Color = clSkyBlue
-            Expanded = False
-            FieldName = 'STATUS_TYPE'
-            Title.Alignment = taCenter
-            Title.Caption = #1057#1090#1072#1090#1091#1089
-            Width = 210
             Visible = True
           end
           item
