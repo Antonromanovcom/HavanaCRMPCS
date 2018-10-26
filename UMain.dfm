@@ -5409,7 +5409,7 @@ object Form1: TForm1
       end
       object userinfoNamelbl: TLabel
         Left = 385
-        Top = 11
+        Top = 43
         Width = 159
         Height = 17
         Caption = #1048#1084#1103' '#1087#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1103': ???'
@@ -5422,7 +5422,7 @@ object Form1: TForm1
       end
       object userinfoLoginlbl: TLabel
         Left = 385
-        Top = 48
+        Top = 80
         Width = 169
         Height = 17
         Caption = #1051#1086#1075#1080#1085' '#1087#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1103': ???'
@@ -5435,7 +5435,7 @@ object Form1: TForm1
       end
       object userinfoPasswordlbl: TLabel
         Left = 385
-        Top = 88
+        Top = 120
         Width = 180
         Height = 17
         Caption = #1055#1072#1088#1086#1083#1100' '#1087#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1103': ???'
@@ -5448,7 +5448,7 @@ object Form1: TForm1
       end
       object userinfoEmaillbl: TLabel
         Left = 385
-        Top = 128
+        Top = 160
         Width = 167
         Height = 17
         Caption = 'Email '#1087#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1103': ???'
@@ -5459,51 +5459,12 @@ object Form1: TForm1
         Font.Style = []
         ParentFont = False
       end
-      object userinfoBirthdaylbl: TLabel
-        Left = 385
-        Top = 168
-        Width = 234
-        Height = 17
-        Caption = #1044#1077#1085#1100' '#1088#1086#1078#1076#1077#1085#1080#1103' '#1087#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1103': ???'
-        Font.Charset = RUSSIAN_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = []
-        ParentFont = False
-      end
       object userinfoRegDatelbl: TLabel
         Left = 385
-        Top = 208
+        Top = 200
         Width = 252
         Height = 17
         Caption = #1044#1072#1090#1072' '#1088#1077#1075#1080#1089#1090#1088#1072#1094#1080#1103' '#1087#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1103': ???'
-        Font.Charset = RUSSIAN_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = []
-        ParentFont = False
-      end
-      object userinfoLastVisitDatelbl: TLabel
-        Left = 385
-        Top = 249
-        Width = 197
-        Height = 17
-        Caption = #1044#1072#1090#1072' '#1087#1086#1089#1083#1077#1076#1085#1077#1075#1086' '#1074#1080#1079#1080#1090#1072': ???'
-        Font.Charset = RUSSIAN_CHARSET
-        Font.Color = clWindowText
-        Font.Height = -15
-        Font.Name = 'Arial'
-        Font.Style = []
-        ParentFont = False
-      end
-      object userinfoLastVisitTimelbl: TLabel
-        Left = 385
-        Top = 288
-        Width = 208
-        Height = 17
-        Caption = #1042#1088#1077#1084#1103' '#1087#1086#1089#1083#1077#1076#1085#1077#1075#1086' '#1074#1080#1079#1080#1090#1072': ???'
         Font.Charset = RUSSIAN_CHARSET
         Font.Color = clWindowText
         Font.Height = -15

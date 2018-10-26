@@ -114,10 +114,7 @@ uses
     userinfoLoginlbl: TLabel;
     userinfoPasswordlbl: TLabel;
     userinfoEmaillbl: TLabel;
-    userinfoBirthdaylbl: TLabel;
     userinfoRegDatelbl: TLabel;
-    userinfoLastVisitDatelbl: TLabel;
-    userinfoLastVisitTimelbl: TLabel;
     ordIDlbl: TLabel;
     ordNamelbl: TLabel;
     ordClientlbl: TLabel;
@@ -536,16 +533,21 @@ begin
   for i := 0 to StringGrid3.RowCount - 1 do
     StringGrid3.Rows[i].Clear;
 
-  //    curyear := YearOf(Now());
+
 
   UniQuery10.Close;
   UniQuery10.SQL.Text :=
-    'SELECT idOrder, OrderName, OrderDate, STATUS_TYPE FROM orders LEFT OUTER JOIN STATUS ON orders.orderstatus = STATUS.ID_STATUS WHERE USER = :userid AND (year(`OrderDate`) = YEAR(NOW())) AND (STATUS.RF>0) AND (STATUS.RF<11) ORDER BY STATUS.RF DESC';
+    'SELECT orders.id, order_short_name, order_deadline FROM orders LEFT OUTER JOIN order_status ' +
+    'ON orders.order_status = order_status.id WHERE orders.user_id = :userid AND ' +
+    '(date_part('+#39+'year'+#39+', order_deadline) = date_part('+#39+'year'+#39+', NOW()))';
+//    'AND (order_status.RF>0) AND (STATUS.RF<11) ORDER BY STATUS.RF DESC';
 
-     //;
+
+// не знаю что это было -  'AND (order_status.RF>0) AND (STATUS.RF<11) ORDER BY STATUS.RF DESC';
+
 
   UniQuery10.ParamByName('userid').AsString := UserID;
-//  UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
+
 
   UniQuery10.ExecSQL;
 
@@ -559,10 +561,10 @@ begin
   while (not UniQuery10.Eof) do
   begin
 
-StringGrid3.Cells[0, x] := UniQuery10.FieldByName('idOrder').AsString;
-StringGrid3.Cells[1, x] := UniQuery10.FieldByName('OrderName').AsString;
-StringGrid3.Cells[2, x] := UniQuery10.FieldByName('OrderDate').AsString;
-StringGrid3.Cells[3, x] := UniQuery10.FieldByName('STATUS_TYPE').AsString;
+StringGrid3.Cells[0, x] := UniQuery10.FieldByName('id').AsString;
+StringGrid3.Cells[1, x] := UniQuery10.FieldByName('order_short_name').AsString;
+StringGrid3.Cells[2, x] := UniQuery10.FieldByName('order_deadline').AsString;
+//StringGrid3.Cells[3, x] := UniQuery10.FieldByName('STATUS_TYPE').AsString; - тут надо  как-то вытащить статус и добавить сюда
 
 UniQuery10.Next;
 
@@ -671,9 +673,10 @@ begin
   curyear := YearOf(Now());
 
   UniQuery10.Close;
-  UniQuery10.SQL.Text :=
-    'select MONTH(`OrderDate`) m, year(`OrderDate`) y, orderstatus os, COUNT(orderstatus) Count, STATUS_TYPE FROM orders LEFT OUTER JOIN STATUS ON orders.orderstatus = STATUS.ID_STATUS WHERE year(`OrderDate`)=:cy AND USER=:userid GROUP BY  m, os ORDER BY m';
-  // select MONTH(`OrderDate`) m, year(`OrderDate`) y, orderstatus os, COUNT(orderstatus) Count, STATUS_TYPE FROM orders LEFT OUTER JOIN STATUS ON orders.orderstatus = STATUS.ID_STATUS WHERE year(`OrderDate`)='2017' AND USER=:userid GROUP BY  m, os ORDER BY m;
+  UniQuery10.SQL.Text := 'select date_part('+#39+'month'+#39+', order_deadline) m, date_part('+#39+'year'+#39+', order_deadline) y, ' +
+' order_status os, COUNT(order_status) Count FROM orders LEFT OUTER JOIN order_status ON ' +
+' orders.order_status = order_status.id WHERE date_part('+#39+'year'+#39+', order_deadline) =:cy AND ' +
+' orders.user_id=:userid GROUP BY  m, y, os ORDER BY m';
 
   UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
@@ -845,7 +848,7 @@ begin
   Button12.Enabled := FALSE;
 
   UniQuery10.SQL.Text :=
-    'SELECT year(`OrderDate`) Y FROM orders WHERE USER=:userid GROUP BY  y ORDER BY y';
+    'SELECT date_part('+#39+'year'+#39+', order_deadline) Y FROM orders WHERE USER=:userid GROUP BY  y ORDER BY y';
 
   UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
@@ -854,7 +857,7 @@ begin
   UniQuery10.Close;
 
   UniQuery10.SQL.Text :=
-    'SELECT year(OrderDate) d, orderstatus os, COUNT(orderstatus) s, STATUS_TYPE FROM orders LEFT OUTER JOIN STATUS ON orders.orderstatus = STATUS.ID_STATUS WHERE User = :userid GROUP BY  d, os ORDER BY d';
+    'SELECT date_part('+#39+'year'+#39+', order_deadline) d, order_status os, COUNT(order_status) s FROM orders LEFT OUTER JOIN order_status ON orders.order_status = order_status.id WHERE orders.user_id = :userid GROUP BY d, os ORDER BY d';
   UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
 
@@ -1012,10 +1015,16 @@ begin
 
   UniQuery10.Close;
 
+  // Запрашиваем зависшие заказы, клиенты которые думают. На самом деле это надо будет или убрать совсем
+  // или сделать чтобы такой статус добавлялся автоматически и система его искала потом (ну и тогда, чтобы удалить его
+  // было нельзя
+
   UniQuery10.SQL.Text :=
-    'SELECT * FROM orders  WHERE orderstatus = 2 AND orders.User = :userid AND (DATEDIFF((NOW()),(OrderRecieve)))>30';
+    'SELECT * FROM orders  WHERE order_status = 8 AND orders.user_id = :userid AND (select public."f_getDIFFERENCEBETWEEN2DATESINDAYS"(orders.order_create_date))>30';
   UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
+
+//  SELECT * FROM orders  WHERE order_status = 8 AND orders.user_id = 2 AND (select public."f_getDIFFERENCEBETWEEN2DATESINHOURS"(orders.order_create_date))>30;
 
   UniDataSource8.DataSet.Refresh;
 
@@ -1025,48 +1034,19 @@ begin
     clearordExpiredBtn.Enabled := true;
     ordExpiredLabel.Caption := 'В базе данных ' +
       inttostr(UniDataSource8.DataSet.RecordCount) +
-      ' клиентов/а с незакрытым статусом Думает!';
-
+      ' клиентов/а с незакрытым статусом заказов Думает!';
   end;
 
   UniQuery10.Close;
-  UniQuery10.SQL.Text :=
-    'SELECT orders.OrderName, orders.orderstatus, clients.Status, clients.Name FROM orders LEFT OUTER JOIN clients ON orders.Customer = clients.ID_clients WHERE orders.User = :userid AND orders.orderstatus <> clients.Status';
-  UniQuery10.ParamByName('userid').AsString := UserID;
-  UniQuery10.ExecSQL;
-  UniDataSource8.DataSet.Refresh;
 
-  if (UniDataSource8.DataSet.RecordCount > 0) then
-  begin
-    ordandclntNotEqlbl.Font.Color := clRed;
-    ordandclntNotEqlbl.Caption := 'В базе данных ' +
-      inttostr(UniDataSource8.DataSet.RecordCount) +
-      ' клиентов и их заказов с несоответствующими статусами!';
+  // -----------------------------------------------------------------------------------------------------------------
 
-  end;
+  // Получаем все просроченные заказы
+  UniQuery10.SQL.Text := 'SELECT * FROM orders  WHERE order_status = 1 AND order_status = 8 AND orders.user_id  = :userid AND (select public."f_getDIFFERENCEBETWEEN2DATESINHOURS"(orders.order_create_date))>30';
 
-  UniQuery10.Close;
-  UniQuery10.SQL.Text :=
-    'SELECT * FROM orders  WHERE orderstatus > 2 AND orderstatus <> 6 AND orderstatus <> 7   AND orders.User = :userid AND (DATEDIFF((NOW()),(orders.ChangeDate)))>60';
-  // ;
-  UniQuery10.ParamByName('userid').AsString := UserID;
-  UniQuery10.ExecSQL;
-  UniDataSource8.DataSet.Refresh;
 
-  if (UniDataSource8.DataSet.RecordCount > 0) then
-  begin
+  // SELECT * FROM orders  WHERE order_status = 1 AND Status = 8 AND User = :userid AND (select public."f_getDIFFERENCEBETWEEN2DATESINHOURS"(orders.order_create_date))>30;
 
-    ordstatusexplbl.Font.Color := clRed;
-    ordstatusexplbl.Caption := 'В базе данных ' +
-      inttostr(UniDataSource8.DataSet.RecordCount) +
-      ' заказов с просроченными статусами!';
-
-  end;
-
-  UniQuery10.Close;
-  UniQuery10.SQL.Text :=
-    'SELECT * FROM clients  WHERE Status > 2 AND Status <> 6 AND Status <> 7   AND User = :userid AND (DATEDIFF((NOW()),(clients.EditDateTime)))>60';
-  // ;
   UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
   UniDataSource8.DataSet.Refresh;
@@ -1461,15 +1441,12 @@ begin
   begin
 
     UniDataSource5.DataSet.Next;
-    // ShowMessage(inttostr(Jobstype.ItemIndex));
-
-    OrderName.Text := UniDataSource5.DataSet.FieldByName('OrderName').AsString;
-    OrderCost.Text := UniDataSource5.DataSet.FieldByName('OrderCost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('orderstatus')
-      .AsInteger) - 1;
+    OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+    OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
 
     ListIndex := 0;
-    CustomerID := UniDataSource5.DataSet.FieldByName('Customer').AsInteger;
+    CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
     ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
 
     if (ListIndex = -1) then
@@ -1477,30 +1454,24 @@ begin
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('JobType')
-      .AsInteger) - 1;
-    Edit4.Text := UniDataSource5.DataSet.FieldByName('Customer').AsString;
+    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
-    if (UniDataSource5.DataSet.FieldByName('OrderRecieve').AsString) = '' then
+    if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = '' then
       RecieveDate.Date := Date
     else
       RecieveDate.Date :=
-        StrToDateTime(UniDataSource5.DataSet.FieldByName('OrderRecieve')
+        StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date')
         .AsString);
 
-    if (UniDataSource5.DataSet.FieldByName('OrderDate').AsString) = '' then
+    if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
       OrderDate.Date := Date
     else
       OrderDate.Date := StrToDateTime
-        (UniDataSource5.DataSet.FieldByName('OrderDate').AsString);
+        (UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
 
-//    Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
-//    Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
 
-    //clientsRecCount:=UniQuery6.RecordCount;
-//ordersRecCount:=UniQuery6.RecordCount;
 
-//StatusBar1.Panels[0].Text:='Клинтов всего | Текущий: ' + inttostr(clientsRecCount) + ' | ' + '1';
 StatusBar1.Panels[1].Text:='Заказов всего | Текущий: ' + inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
 
 
@@ -1511,45 +1482,34 @@ StatusBar1.Panels[1].Text:='Заказов всего | Текущий: ' + inttostr(ordersRecCount
 
     UniDataSource1.DataSet.Next;
 
-    if (UniDataSource1.DataSet.FieldByName('BirthdayUnknow').AsInteger = 1) then
+  {  if (UniDataSource1.DataSet.FieldByName('BirthdayUnknow').AsInteger = 1) then
       birthdayunknowChkBx.Checked := true
     else
-      birthdayunknowChkBx.Checked := FALSE;
+      birthdayunknowChkBx.Checked := FALSE; }
 
     Edit1.Text := inttostr(UniDataSource1.DataSet.RecNo);
     Edit2.Text := inttostr(UniDataSource1.DataSet.RecordCount);
 
 
-      //clientsRecCount:=UniQuery6.RecordCount;
-//ordersRecCount:=UniQuery6.RecordCount;
-
 StatusBar1.Panels[0].Text:='Клинтов всего | Текущий: ' + inttostr(clientsRecCount) + ' | ' + inttostr(UniDataSource1.DataSet.RecNo);
-//StatusBar1.Panels[1].Text:='Заказов всего | Текущий: ' + inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
 
+    eName.Text := UniDataSource1.DataSet.FieldByName('name').AsString;
+    ePhone.Text := UniDataSource1.DataSet.FieldByName('phone').AsString;
+    eEmail.Text := UniDataSource1.DataSet.FieldByName('email').AsString;
+//    eOrderedDate.Text := UniDataSource1.DataSet.FieldByName('order_create_date').AsString;
 
-
-
-    eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
-    ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
-    eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
-    eOrderedDate.Text := UniDataSource1.DataSet.FieldByName
-      ('OrderDateTime').AsString;
-
-    if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
+    if (UniDataSource1.DataSet.FieldByName('birthday').AsString) = '' then
       TestDate.Date := Date
     else
       TestDate.Date := StrToDateTime
-        (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
+        (UniDataSource1.DataSet.FieldByName('birthday').AsString);
 
-    ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status')
-      .AsInteger) - 1;
-    ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('ClientFrom')
-      .AsInteger) - 1;
+//    ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status').AsInteger) - 1;
+    ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
 
     Idx := ComboBox1.ItemIndex;
     value := Integer(ComboBox1.Items.Objects[Idx]);
 
-    // eName.Text := inttostr(value);
 
   end;
 end;
@@ -1567,14 +1527,13 @@ begin
   begin
 
     UniDataSource5.DataSet.Prior;
-    // UniDataSource5.DataSet.Next;
-    OrderName.Text := UniDataSource5.DataSet.FieldByName('OrderName').AsString;
-    OrderCost.Text := UniDataSource5.DataSet.FieldByName('OrderCost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('orderstatus')
+    OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+    OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status')
       .AsInteger) - 1;
 
     ListIndex := 0;
-    CustomerID := UniDataSource5.DataSet.FieldByName('Customer').AsInteger;
+    CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
     ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
 
     if (ListIndex = -1) then
@@ -1582,25 +1541,23 @@ begin
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('JobType')
+    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type')
       .AsInteger) - 1;
-    Edit4.Text := UniDataSource5.DataSet.FieldByName('Customer').AsString;
+    Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
-    if (UniDataSource5.DataSet.FieldByName('OrderRecieve').AsString) = '' then
+    if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = '' then
       RecieveDate.Date := Date
     else
       RecieveDate.Date :=
-        StrToDateTime(UniDataSource5.DataSet.FieldByName('OrderRecieve')
+        StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date')
         .AsString);
 
-    if (UniDataSource5.DataSet.FieldByName('OrderDate').AsString) = '' then
+    if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
       OrderDate.Date := Date
     else
       OrderDate.Date := StrToDateTime
-        (UniDataSource5.DataSet.FieldByName('OrderDate').AsString);
+        (UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
 
-//    Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
-//    Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
     StatusBar1.Panels[1].Text:='Заказов всего | Текущий: ' + inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
 
   end
@@ -1609,20 +1566,14 @@ begin
 
     UniDataSource1.DataSet.Prior;
 
-//    Edit1.Text := inttostr(UniDataSource1.DataSet.RecNo);
- //   Edit2.Text := inttostr(UniDataSource1.DataSet.RecordCount);
+
     StatusBar1.Panels[0].Text:='Клинтов всего | Текущий: ' + inttostr(clientsRecCount) + ' | ' + inttostr(UniDataSource1.DataSet.RecNo);
 
-    if (UniDataSource1.DataSet.FieldByName('BirthdayUnknow').AsInteger = 1) then
-      birthdayunknowChkBx.Checked := true
-    else
-      birthdayunknowChkBx.Checked := FALSE;
 
     eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
     ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
     eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
-    eOrderedDate.Text := UniDataSource1.DataSet.FieldByName
-      ('OrderDateTime').AsString;
+//    eOrderedDate.Text := UniDataSource1.DataSet.FieldByName('OrderDateTime').AsString;
 
     if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
       TestDate.Date := Date
@@ -1630,10 +1581,8 @@ begin
       TestDate.Date := StrToDateTime
         (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
 
-    ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status')
-      .AsInteger) - 1;
-    ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('ClientFrom')
-      .AsInteger) - 1;
+//    ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status').AsInteger) - 1;
+    ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
 
   end;
 
@@ -1650,7 +1599,6 @@ begin
     Jobstype.Text := '';
     RecieveDate.Date := Date;
     OrderDate.Date := Date;
-    // OrderPreCost.text := '';
     OrderCost.Text := '';
     orderstatus.Text := '';
     SaveBtn.Visible := true;
@@ -1668,7 +1616,6 @@ begin
     ComboBox2.Text := '';
 
     TestDate.Date := Date;
-    //DBLCBClFrom.KeyValue := NULL;
     SaveBtn.Visible := true;
 
   end;
@@ -1689,16 +1636,14 @@ begin
   if (MainTab.TabIndex = 2) then
   begin
 
-//    UniDataSource5.DataSet.Prior;
+
     UniDataSource5.DataSet.Last;
-    // UniDataSource5.DataSet.Next;
-    OrderName.Text := UniDataSource5.DataSet.FieldByName('OrderName').AsString;
-    OrderCost.Text := UniDataSource5.DataSet.FieldByName('OrderCost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('orderstatus')
-      .AsInteger) - 1;
+    OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+    OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
 
     ListIndex := 0;
-    CustomerID := UniDataSource5.DataSet.FieldByName('Customer').AsInteger;
+    CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
     ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
 
     if (ListIndex = -1) then
@@ -1706,22 +1651,21 @@ begin
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('JobType')
+    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type')
       .AsInteger) - 1;
-    Edit4.Text := UniDataSource5.DataSet.FieldByName('Customer').AsString;
+    Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
-    if (UniDataSource5.DataSet.FieldByName('OrderRecieve').AsString) = '' then
+    if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = '' then
       RecieveDate.Date := Date
     else
       RecieveDate.Date :=
-        StrToDateTime(UniDataSource5.DataSet.FieldByName('OrderRecieve')
-        .AsString);
+        StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
 
-    if (UniDataSource5.DataSet.FieldByName('OrderDate').AsString) = '' then
+    if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
       OrderDate.Date := Date
     else
       OrderDate.Date := StrToDateTime
-        (UniDataSource5.DataSet.FieldByName('OrderDate').AsString);
+        (UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
 
     Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
     Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
@@ -1734,23 +1678,18 @@ begin
 
     UniDataSource1.DataSet.Last;
 
-    if (UniDataSource1.DataSet.FieldByName('BirthdayUnknow').AsInteger = 1) then
+{    if (UniDataSource1.DataSet.FieldByName('BirthdayUnknow').AsInteger = 1) then
       birthdayunknowChkBx.Checked := true
     else
       birthdayunknowChkBx.Checked := FALSE;
+ }
 
-//    Edit1.Text := inttostr(UniDataSource1.DataSet.RecNo);
-//    Edit2.Text := inttostr(UniDataSource1.DataSet.RecordCount);
     StatusBar1.Panels[0].Text:='Клинтов всего | Текущий: ' + inttostr(clientsRecCount) + ' | ' + inttostr(UniDataSource1.DataSet.RecNo);
 
     eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
     ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
     eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
-    eOrderedDate.Text := UniDataSource1.DataSet.FieldByName
-      ('OrderDateTime').AsString;
-    // eBirthday.Text := UniDataSource1.DataSet.FieldByName('Birthday').AsString;
-    // eStatus.Text := UniDataSource1.DataSet.FieldByName('Status').AsString;
-    // eFrom.Text := UniDataSource1.DataSet.FieldByName('ClientFrom').AsString;
+//    eOrderedDate.Text := UniDataSource1.DataSet.FieldByName('OrderDateTime').AsString;
 
     if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
       TestDate.Date := Date
@@ -1758,10 +1697,8 @@ begin
       TestDate.Date := StrToDateTime
         (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
 
-    ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status')
-      .AsInteger) - 1;
-    ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('ClientFrom')
-      .AsInteger) - 1;
+//    ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status'.AsInteger) - 1;
+    ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
 
   end;
 end;
@@ -1804,15 +1741,12 @@ if (MainTab.TabIndex = 2) then
   begin
 
     UniDataSource5.DataSet.First;
-//    UniDataSource5.DataSet.Last;
-    // UniDataSource5.DataSet.Next;
-    OrderName.Text := UniDataSource5.DataSet.FieldByName('OrderName').AsString;
-    OrderCost.Text := UniDataSource5.DataSet.FieldByName('OrderCost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('orderstatus')
-      .AsInteger) - 1;
+    OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+    OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
 
     ListIndex := 0;
-    CustomerID := UniDataSource5.DataSet.FieldByName('Customer').AsInteger;
+    CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
     ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
 
     if (ListIndex = -1) then
@@ -1820,25 +1754,21 @@ if (MainTab.TabIndex = 2) then
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('JobType')
+    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type')
       .AsInteger) - 1;
     Edit4.Text := UniDataSource5.DataSet.FieldByName('Customer').AsString;
 
-    if (UniDataSource5.DataSet.FieldByName('OrderRecieve').AsString) = '' then
+    if (UniDataSource5.DataSet.FieldByName('client').AsString) = '' then
       RecieveDate.Date := Date
     else
-      RecieveDate.Date :=
-        StrToDateTime(UniDataSource5.DataSet.FieldByName('OrderRecieve')
-        .AsString);
+      RecieveDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
 
-    if (UniDataSource5.DataSet.FieldByName('OrderDate').AsString) = '' then
+    if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
       OrderDate.Date := Date
     else
       OrderDate.Date := StrToDateTime
-        (UniDataSource5.DataSet.FieldByName('OrderDate').AsString);
+        (UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
 
-//    Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
-//    Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
 
     StatusBar1.Panels[1].Text:='Заказов всего | Текущий: ' + inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
 
@@ -1848,14 +1778,13 @@ if (MainTab.TabIndex = 2) then
 
 UniDataSource1.DataSet.First;
 
-//  Edit1.Text := inttostr(UniDataSource1.DataSet.RecNo);
-//  Edit2.Text := inttostr(UniDataSource1.DataSet.RecordCount);
+
   StatusBar1.Panels[0].Text:='Клинтов всего | Текущий: ' + inttostr(clientsRecCount) + ' | ' + inttostr(UniDataSource1.DataSet.RecNo);
 
-  if (UniDataSource1.DataSet.FieldByName('BirthdayUnknow').AsInteger = 1) then
+{  if (UniDataSource1.DataSet.FieldByName('BirthdayUnknow').AsInteger = 1) then
     birthdayunknowChkBx.Checked := true
   else
-    birthdayunknowChkBx.Checked := FALSE;
+    birthdayunknowChkBx.Checked := FALSE; }
 
   Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
   Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
@@ -1863,22 +1792,15 @@ UniDataSource1.DataSet.First;
   eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
   ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
   eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
-  eOrderedDate.Text := UniDataSource1.DataSet.FieldByName
-    ('OrderDateTime').AsString;
-  // eBirthday.Text := UniDataSource1.DataSet.FieldByName('Birthday').AsString;
-  // eStatus.Text := UniDataSource1.DataSet.FieldByName('Status').AsString;
-  // eFrom.Text := UniDataSource1.DataSet.FieldByName('ClientFrom').AsString;
+//  eOrderedDate.Text := UniDataSource1.DataSet.FieldByName('OrderDateTime').AsString;
 
   if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
     TestDate.Date := Date
   else
-    TestDate.Date := StrToDateTime(UniDataSource1.DataSet.FieldByName
-      ('Birthday').AsString);
+    TestDate.Date := StrToDateTime(UniDataSource1.DataSet.FieldByName('Birthday').AsString);
 
-  ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status')
-    .AsInteger) - 1;
-  ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('ClientFrom')
-    .AsInteger) - 1;
+//  ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status').AsInteger) - 1;
+  ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
 end;
 end;
 
@@ -2150,22 +2072,21 @@ begin
   if (MainTab.TabIndex = 2) then
   begin
 
-    UniQuery5.SQL.Text :=
-      'INSERT INTO CRM.orders (idOrder, OrderName, Customer, JobType, OrderRecieve, OrderDate, OrderCost, orderstatus, User) VALUES (NULL, :ordName, :ordCustomer, :ordJobsType, :ordDateRecieve, :ordDate, :ordCost, :ordStatus, :userid)';
+    UniQuery5.SQL.Text := 'INSERT INTO orders (order_short_name,' +
+    ' client, order_type, order_create_date, order_deadline, order_cost, order_status, user_id)'+
+    ' VALUES (:ordName, :ordCustomer, :ordJobsType, :ordDateRecieve, :ordDate,'+
+    ' :ordCost, :ordStatus, :userid)';
 
     UniQuery5.ParamByName('ordName').AsString := OrderName.Text;
-    UniQuery5.ParamByName('ordCustomer').AsString :=
-      inttostr(CustomerArr[Customer.ItemIndex]);
-    UniQuery5.ParamByName('ordJobsType').AsString :=
-      inttostr((Jobstype.ItemIndex) + 1);
-    UniQuery5.ParamByName('userid').AsString := UserID;
-    UniQuery5.ParamByName('ordDateRecieve').AsString :=
-      FormatDateTime('yyyy-mm-dd ', (RecieveDate.Date));
-    UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ',
-      (OrderDate.Date));
-    UniQuery5.ParamByName('ordCost').AsString := OrderCost.Text;
-    UniQuery5.ParamByName('ordStatus').AsString :=
-      inttostr(orderstatus.ItemIndex);
+//    UniQuery5.ParamByName('ordCustomer').AsString := inttostr(CustomerArr[Customer.ItemIndex]);
+    UniQuery5.ParamByName('ordCustomer').AsInteger := CustomerArr[Customer.ItemIndex];
+//    UniQuery5.ParamByName('ordJobsType').AsString := inttostr((Jobstype.ItemIndex) + 1);
+    UniQuery5.ParamByName('ordJobsType').AsInteger := Jobstype.ItemIndex + 1;
+    UniQuery5.ParamByName('userid').AsInteger := StrToInt(UserID);
+    UniQuery5.ParamByName('ordDateRecieve').AsString := FormatDateTime('yyyy-mm-dd ', (RecieveDate.Date));
+    UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ', (OrderDate.Date));
+    UniQuery5.ParamByName('ordCost').AsInteger := StrToInt(OrderCost.Text);
+    UniQuery5.ParamByName('ordStatus').AsInteger := orderstatus.ItemIndex;
 
     UniQuery5.Execute;
 
@@ -2182,18 +2103,15 @@ begin
       BirthdayUnknow := 0;
 
     UniQuery5.SQL.Text :=
-      'INSERT INTO clients (ID_clients, Name, Phone, Email, ClientFrom, Birthday, Status, User, OrderDateTime, EditDateTime, BirthdayUnknow) VALUES (NULL, :clName, :clPhone, :clEmail, :clFrom, :clBD, :clStatus, :userid, :orderdate, :editdate, :buk)';
+      'INSERT INTO clients (Name, Phone, Email, whereclientfrom, Birthday, user_id, date_created) VALUES (:clName, :clPhone, :clEmail, :clFrom, :clBD, :userid, :orderdate)';
 
     UniQuery5.ParamByName('clName').AsString := eName.Text;
     UniQuery5.ParamByName('clPhone').AsString := ePhone.Text;
     UniQuery5.ParamByName('clEmail').AsString := eEmail.Text;
     UniQuery5.ParamByName('userid').AsString := UserID;
-    UniQuery5.ParamByName('buk').AsString := inttostr(BirthdayUnknow);
-    UniQuery5.ParamByName('clStatus').AsString := inttostr(ComboBox1.ItemIndex+1);
     UniQuery5.ParamByName('clFrom').AsString := inttostr(ComboBox2.ItemIndex+1);
 
-    UniQuery5.ParamByName('clBD').AsString := FormatDateTime('yyyy-mm-dd ',
-      (TestDate.Date));
+    UniQuery5.ParamByName('clBD').AsString := FormatDateTime('yyyy-mm-dd ', (TestDate.Date));
 
     myDate := Date;
     myTime := Time;
@@ -2201,7 +2119,7 @@ begin
     FinalDate := FormatDateTime('yyyy-mm-dd ', myDate);
     OrderDateTime := FinalDate + ' ' + TimeToStr(myTime);
     UniQuery5.ParamByName('orderdate').AsString := OrderDateTime;
-    UniQuery5.ParamByName('editdate').AsString := OrderDateTime;
+//    UniQuery5.ParamByName('editdate').AsString := OrderDateTime;
     UniQuery5.Execute;
 
     SaveBtn.Visible := FALSE;
