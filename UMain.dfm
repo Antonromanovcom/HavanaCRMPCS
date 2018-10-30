@@ -719,7 +719,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = UserTab
+    ActivePage = OrderTab
     TabOrder = 0
     object TabSheet3: TTabSheet
       Caption = #1042#1093#1086#1076

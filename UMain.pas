@@ -13,7 +13,7 @@ uses
   VclTee.TeEngine, VclTee.Series, VclTee.TeeProcs, VclTee.Chart,
   DBGridEhGrouping, ToolCtrlsEh, DBGridEhToolCtrls, DynVarsEh, EhLibVCL,
   GridsEh, DBAxisGridsEh, DBGridEh, DateUtils, Vcl.OleCtrls, SHDocVw, activex,mshtml,ComObj,
-  Vcl.Imaging.pngimage, Vcl.Imaging.jpeg, PostgreSQLUniProvider;
+  Vcl.Imaging.pngimage, Vcl.Imaging.jpeg, PostgreSQLUniProvider, Generics.Collections, Generics.Defaults;
 
 
   type
@@ -135,15 +135,13 @@ uses
     Label2: TLabel;
     Image3: TImage;
     PostgreSQLUniProvider1: TPostgreSQLUniProvider;
+
     procedure Activate();
-
     procedure FormActivate(Sender: TObject);
-
     procedure DBNavigator1Click(Sender: TObject; Button: TNavigateBtn);
     procedure LastButtonClick(Sender: TObject);
     procedure Button4Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
-
     procedure FormCreate(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure Button2Click(Sender: TObject);
@@ -172,6 +170,7 @@ uses
     procedure TabSheet1Show(Sender: TObject);
     procedure TabSheet2Show(Sender: TObject);
     procedure TabSheet3Show(Sender: TObject);
+
   private
     { Private declarations }
     procedure act();
@@ -181,8 +180,8 @@ uses
     procedure EnableOffAllButtons();
     procedure EnableOffRepButtons();
     procedure EnableOnOrdButtons();
-        procedure FirstOrder();
-                procedure FirstClient();
+    procedure FirstOrder();
+    procedure FirstClient();
 
 
 
@@ -193,12 +192,12 @@ uses
     passwordglobal: String;
     UserID: string;
     CustomerArr: array of Integer;
-  FIsStartPage: Boolean;
+    FIsStartPage: Boolean;
     clientsRecCount: Integer;
-        ordersRecCount: Integer;
-      FBg: TBitmap;
-
-
+    ordersRecCount: Integer;
+    FBg: TBitmap;
+    function findJobByID (a: integer): integer;
+    function findIDByJob (b: integer): integer;
 
 
     // currentTab: Integer;
@@ -208,8 +207,7 @@ uses
 var
   Form1: TForm1;
   IniFile: TIniFile;
-
-
+  JobsDictionary: TDictionary<Integer, Integer>;
 
 implementation
 
@@ -490,6 +488,49 @@ LastButton.Enabled:=true;
 //ReportTab.TabVisible  := true;
 //UserTab.TabVisible  := true;
 
+end;
+
+function TForm1.findIDByJob(b: integer): integer;
+var
+key: Integer;
+begin
+
+
+if JobsDictionary.ContainsValue(b) then
+begin
+
+  // findIDByJob  :=  JobsDictionary.;
+
+  for key in JobsDictionary.Keys do
+  begin
+  if (JobsDictionary[key] = b) then
+  begin
+  findIDByJob := key;
+  Break;
+  end;
+//ShowMessage(IntToStr(key) + " - " +IntToStr(JobsDictionary[key]));
+  end;
+end
+else
+  begin
+	findIDByJob := -1; // не нашли значение
+  end;
+
+end;
+
+function TForm1.findJobByID(a: integer): integer;
+begin
+
+if (JobsDictionary.ContainsKey(a)) then
+begin
+
+    findJobByID  :=  JobsDictionary[a];
+
+end
+else
+  begin
+	findJobByID := -1; // не нашли ключ
+  end;
 end;
 
 procedure TForm1.EnableOffRepButtons();
@@ -1079,7 +1120,9 @@ begin
 
   UniQuery2.ExecSQL;
   UniQuery3.ExecSQL;
-  // UniQuery10.ExecSQL;
+
+    JobsDictionary := TDictionary<Integer, Integer>.Create; //Создаем Dictionary для хранения пар для списков типа работ
+
 
   // =============================== COMBO BOX STATUS FILLING ================
   statusRecCount := UniDataSource2.DataSet.RecordCount;
@@ -1141,7 +1184,7 @@ begin
  // Customer.ItemIndex := 0;
  // Customer.Enabled:=false;
 
-  DBEdit1.Enabled:=true;
+DBEdit1.Enabled:=true;
 Button9.Enabled:=false;
 Button11.Enabled:=false;
 Button10.Enabled:=false;
@@ -1208,9 +1251,11 @@ MainTab.TabIndex := 1;
   for j := 1 to jobstypeRecCount do
   begin
 
-    sItem := UniDataSource7.DataSet.FieldByName('type').AsString;
+//    sItem := UniDataSource7.DataSet.FieldByName('type').AsString;
+    sItem := UniDataSource7.DataSet.FieldByName('type').AsString + ' - ' + UniDataSource7.DataSet.FieldByName('id').AsString + ' - ' + IntToStr(j);
+    JobsDictionary.Add(j, UniDataSource7.DataSet.FieldByName('id').AsInteger); // Кладем в мапу j и айдишник из базы чтобы потом их соотносить.
     sItemHelp := Format(sItem, [j]);
-    // ShowMessage(sItemHelp);
+
     UniDataSource7.DataSet.Next;
     Jobstype.Items.AddObject(sItem, TObject(j));
   end;
@@ -1454,7 +1499,10 @@ begin
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    // Получаем тип заказа
+//    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger)-1;
+
     Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
     if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = '' then
@@ -2067,6 +2115,7 @@ var
   myTime: TDateTime;
   FinalDate: string;
   BirthdayUnknow: Integer;
+  tempCost: Integer; // для преобразования стоимости если херню юзер ввел
 
 begin
   if (MainTab.TabIndex = 2) then
@@ -2078,15 +2127,35 @@ begin
     ' :ordCost, :ordStatus, :userid)';
 
     UniQuery5.ParamByName('ordName').AsString := OrderName.Text;
-//    UniQuery5.ParamByName('ordCustomer').AsString := inttostr(CustomerArr[Customer.ItemIndex]);
     UniQuery5.ParamByName('ordCustomer').AsInteger := CustomerArr[Customer.ItemIndex];
-//    UniQuery5.ParamByName('ordJobsType').AsString := inttostr((Jobstype.ItemIndex) + 1);
-    UniQuery5.ParamByName('ordJobsType').AsInteger := Jobstype.ItemIndex + 1;
-    UniQuery5.ParamByName('userid').AsInteger := StrToInt(UserID);
+//    UniQuery5.ParamByName('ordJobsType').AsInteger := Jobstype.ItemIndex + 1;
+    UniQuery5.ParamByName('ordJobsType').AsInteger := findJobByID(Jobstype.ItemIndex + 1);
+
+
+
     UniQuery5.ParamByName('ordDateRecieve').AsString := FormatDateTime('yyyy-mm-dd ', (RecieveDate.Date));
     UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ', (OrderDate.Date));
-    UniQuery5.ParamByName('ordCost').AsInteger := StrToInt(OrderCost.Text);
-    UniQuery5.ParamByName('ordStatus').AsInteger := orderstatus.ItemIndex;
+
+    if not TryStrToInt(OrderCost.Text, tempCost)  then // Проверяем число ввели или нет
+    begin
+      UniQuery5.ParamByName('ordCost').AsInteger := 0;
+    end
+    else
+    begin
+     UniQuery5.ParamByName('ordCost').AsInteger := tempCost;
+    end;
+
+
+//  UniQuery5.ParamByName('ordCost').AsInteger := TryStrToInt(OrderCost.Text, i);
+    if (orderstatus.ItemIndex = -1)  then // Проверяем если ничего не выбрано
+    begin
+      UniQuery5.ParamByName('ordStatus').Clear;
+    end
+    else
+    begin
+      UniQuery5.ParamByName('ordStatus').Clear;
+    end;
+    UniQuery5.ParamByName('userid').AsInteger := StrToInt(UserID);
 
     UniQuery5.Execute;
 
