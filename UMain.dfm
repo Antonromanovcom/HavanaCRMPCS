@@ -719,7 +719,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = OrderTab
+    ActivePage = ReportTab
     TabOrder = 0
     object TabSheet3: TTabSheet
       Caption = #1042#1093#1086#1076
@@ -5491,7 +5491,7 @@ object Form1: TForm1
         Top = 3
         Width = 846
         Height = 393
-        ActivePage = TabSheet5
+        ActivePage = TabSheet6
         MultiLine = True
         TabOrder = 0
         TabPosition = tpLeft

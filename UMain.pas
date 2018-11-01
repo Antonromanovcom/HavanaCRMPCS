@@ -198,6 +198,8 @@ uses
     FBg: TBitmap;
     function findJobByID (a: integer): integer;
     function findIDByJob (b: integer): integer;
+    function findStatusByID (b: integer): integer;
+
 
 
     // currentTab: Integer;
@@ -208,6 +210,7 @@ var
   Form1: TForm1;
   IniFile: TIniFile;
   JobsDictionary: TDictionary<Integer, Integer>;
+  statusDictionary: TDictionary<Integer, Integer>;
 
 implementation
 
@@ -533,6 +536,21 @@ else
   end;
 end;
 
+function TForm1.findStatusByID(b: integer): integer;
+begin
+
+if (statusDictionary.ContainsKey(b)) then
+begin
+
+    findStatusByID  :=  statusDictionary[b];
+
+end
+else
+  begin
+	findStatusByID := -1; // не нашли ключ
+  end;
+end;
+
 procedure TForm1.EnableOffRepButtons();
 
 begin
@@ -767,35 +785,52 @@ begin
       case (UniDataSource8.DataSet.FieldByName('os').AsInteger) of
         1:
           begin
-            refusedLeads := UniDataSource8.DataSet.FieldByName('Count')
-              .AsInteger;
+//            refusedLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
           end;
         2:
           begin
-            injobLeads := UniDataSource8.DataSet.FieldByName('Count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
           end;
         3:
           begin
-            injobLeads := UniDataSource8.DataSet.FieldByName('Count').AsInteger;
-          end;
-        4:
-          begin
-            injobLeads := UniDataSource8.DataSet.FieldByName('Count').AsInteger;
-          end;
-        5:
-          begin
-            successLeads := UniDataSource8.DataSet.FieldByName('Count')
-              .AsInteger;
-          end;
-        6:
-          begin
-            successLeads := UniDataSource8.DataSet.FieldByName('Count')
-              .AsInteger;
+//            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
           end;
         7:
           begin
-            successLeads := UniDataSource8.DataSet.FieldByName('Count')
-              .AsInteger;
+//            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            refusedLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+        8:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+                        injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+        9:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+                injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+        10:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+                        refusedLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+           11:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+           12:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+           13:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
           end;
 
       end;
@@ -817,38 +852,52 @@ begin
       case (UniDataSource8.DataSet.FieldByName('os').AsInteger) of
         1:
           begin
-            refusedLeads := UniDataSource8.DataSet.FieldByName('Count')
-              .AsInteger;
+//            refusedLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
           end;
         2:
           begin
-            injobLeads := injobLeads + UniDataSource8.DataSet.FieldByName
-              ('Count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
           end;
         3:
           begin
-            injobLeads := injobLeads + UniDataSource8.DataSet.FieldByName
-              ('Count').AsInteger;
-          end;
-        4:
-          begin
-            injobLeads := injobLeads + UniDataSource8.DataSet.FieldByName
-              ('Count').AsInteger;
-          end;
-        5:
-          begin
-            successLeads := successLeads + UniDataSource8.DataSet.FieldByName
-              ('Count').AsInteger;
-          end;
-        6:
-          begin
-            successLeads := successLeads + UniDataSource8.DataSet.FieldByName
-              ('Count').AsInteger;
+//            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
           end;
         7:
           begin
-            successLeads := successLeads + UniDataSource8.DataSet.FieldByName
-              ('Count').AsInteger;
+//            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            refusedLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+        8:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+                        injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+        9:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+                injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+        10:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+                        refusedLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+           11:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+           12:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+          end;
+           13:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('count').AsInteger;
           end;
       end;
       Last := UniDataSource8.DataSet.FieldByName('m').AsString;
@@ -910,15 +959,6 @@ begin
   injobLeads := 0;
   refusedLeads := 0;
 
-  // Button4.Visible := FALSE;
-
-  { for i := 0 to 29 do
-    begin
-    s := yearending(i);
-    ListBox1.Items.Add('В базе есть статистика за ' + inttostr(i) + ' ' + s);
-    end;
-  }
-
   s := yearending(yearscount);
   rptlblYearStatistic.Caption := 'В базе есть статистика за ' +
     inttostr(yearscount) + ' ' + s;
@@ -927,9 +967,9 @@ begin
     StringGrid1.RowCount := StringGrid1.RowCount + 1;
 
   StringGrid1.Cells[0, 1] := 'Лидов всего'; // allLeads
-  StringGrid1.Cells[0, 2] := 'Успешно закрыто'; // 5, 6, 7  - successLeads
-  StringGrid1.Cells[0, 3] := 'Не заказали'; // 1     - refusedLeads
-  StringGrid1.Cells[0, 4] := 'В работе'; // 2, 3, 4 - injobLeads
+  StringGrid1.Cells[0, 2] := 'Успешно закрыто'; // 3  - successLeads
+  StringGrid1.Cells[0, 3] := 'Не заказали'; // 7, 10    - refusedLeads
+  StringGrid1.Cells[0, 4] := 'В работе'; // 1, 2, 9, 11, 12, 13 - injobLeads
   StringGrid1.ColWidths[0] := 100;
 
   UniDataSource8.DataSet.First;
@@ -955,7 +995,8 @@ begin
       case (UniDataSource8.DataSet.FieldByName('os').AsInteger) of
         1:
           begin
-            refusedLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+//            refusedLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
           end;
         2:
           begin
@@ -963,23 +1004,43 @@ begin
           end;
         3:
           begin
-            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
-          end;
-        4:
-          begin
-            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
-          end;
-        5:
-          begin
-            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
-          end;
-        6:
-          begin
+//            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
             successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
           end;
         7:
           begin
-            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+//            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            refusedLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+        8:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+                        injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+        9:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+                injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+        10:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+                        refusedLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+           11:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+           12:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+           13:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
           end;
 
       end;
@@ -1007,37 +1068,52 @@ begin
       case (UniDataSource8.DataSet.FieldByName('os').AsInteger) of
         1:
           begin
-            refusedLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+//            refusedLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
           end;
         2:
           begin
-            injobLeads := injobLeads + UniDataSource8.DataSet.FieldByName('s')
-              .AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
           end;
         3:
           begin
-            injobLeads := injobLeads + UniDataSource8.DataSet.FieldByName('s')
-              .AsInteger;
-          end;
-        4:
-          begin
-            injobLeads := injobLeads + UniDataSource8.DataSet.FieldByName('s')
-              .AsInteger;
-          end;
-        5:
-          begin
-            successLeads := successLeads + UniDataSource8.DataSet.FieldByName
-              ('s').AsInteger;
-          end;
-        6:
-          begin
-            successLeads := successLeads + UniDataSource8.DataSet.FieldByName
-              ('s').AsInteger;
+//            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
           end;
         7:
           begin
-            successLeads := successLeads + UniDataSource8.DataSet.FieldByName
-              ('s').AsInteger;
+//            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            refusedLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+        8:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+                        injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+        9:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+                injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+        10:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+                        refusedLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+           11:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+           12:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+          end;
+           13:
+          begin
+//            successLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
+            injobLeads := UniDataSource8.DataSet.FieldByName('s').AsInteger;
           end;
       end;
       Last := UniDataSource8.DataSet.FieldByName('d').AsString;
@@ -1122,6 +1198,7 @@ begin
   UniQuery3.ExecSQL;
 
     JobsDictionary := TDictionary<Integer, Integer>.Create; //Создаем Dictionary для хранения пар для списков типа работ
+    statusDictionary  := TDictionary<Integer, Integer>.Create; //Создаем Dictionary для хранения видов статусов
 
 
   // =============================== COMBO BOX STATUS FILLING ================
@@ -1132,7 +1209,7 @@ begin
 
     sItem := UniDataSource2.DataSet.FieldByName('status').AsString;
     sItemHelp := Format(sItem, [j]);
-    // ShowMessage(sItemHelp);
+    statusDictionary.Add(j, UniDataSource2.DataSet.FieldByName('id').AsInteger); // Кладем в мапу j и айдишник из базы чтобы потом их соотносить для поиска статусов.
     UniDataSource2.DataSet.Next;
     ComboBox1.Items.AddObject(sItem, TObject(j));
   end;
@@ -1165,7 +1242,7 @@ begin
 
     sItem := UniDataSource2.DataSet.FieldByName('status').AsString;
     sItemHelp := Format(sItem, [j]);
-
+   // statusDictionary.Add(j, UniDataSource2.DataSet.FieldByName('id').AsInteger); // Кладем в мапу j и айдишник из базы чтобы потом их соотносить для поиска статусов.
     UniDataSource2.DataSet.Next;
     orderstatus.Items.AddObject(sItem, TObject(j));
   end;
@@ -1802,9 +1879,8 @@ if (MainTab.TabIndex = 2) then
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type')
-      .AsInteger) - 1;
-    Edit4.Text := UniDataSource5.DataSet.FieldByName('Customer').AsString;
+    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
     if (UniDataSource5.DataSet.FieldByName('client').AsString) = '' then
       RecieveDate.Date := Date
@@ -1814,8 +1890,7 @@ if (MainTab.TabIndex = 2) then
     if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
       OrderDate.Date := Date
     else
-      OrderDate.Date := StrToDateTime
-        (UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
+      OrderDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
 
 
     StatusBar1.Panels[1].Text:='Заказов всего | Текущий: ' + inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
@@ -1950,12 +2025,11 @@ begin
 
 UniQuery1.Close;
 UniQuery1.SQL.Text :=
-      'SELECT * FROM clients LEFT OUTER JOIN STATUS ON clients.Status = STATUS.ID_STATUS LEFT OUTER JOIN From_Type_Table ON clients.ClientFrom = From_Type_Table.ID_FROM WHERE User = :userid;';
+      'SELECT * FROM clients WHERE user_id = :userid;';
     UniQuery1.ParamByName('userid').AsString := UserID;
     UniQuery1.Execute;
     clientsRecCountbefore:=clientsRecCount;
     clientsRecCount:=UniQuery1.RecordCount;
-//ShowMessage(inttostr(clientsRecCount));
 
 FirstClient();
 
@@ -2014,7 +2088,8 @@ begin
 
   UniQuery10.Close;
   UniQuery10.SQL.Text :=
-    'select year(`OrderDate`) year, SUM(OrderCost) cost FROM orders WHERE USER= :userid GROUP BY  year ORDER BY year';
+    '    select date_part('+#39+'year'+#39+', order_create_date) years, SUM(orders.order_cost) c FROM orders WHERE user_id= :userid GROUP BY  years ORDER BY years';
+
 
   UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
@@ -2041,9 +2116,9 @@ begin
   begin
 
     StringGrid1.Cells[0, y] := UniDataSource8.DataSet.FieldByName
-      ('year').AsString;
+      ('years').AsString;
     StringGrid1.Cells[1, y] := UniDataSource8.DataSet.FieldByName
-      ('cost').AsString;
+      ('c').AsString;
 
     inc(y);
     UniDataSource8.DataSet.Next;
@@ -2052,7 +2127,8 @@ begin
 
   UniQuery10.Close;
   UniQuery10.SQL.Text :=
-    'select MONTH(`OrderDate`) M, SUM(OrderCost) cost FROM orders WHERE USER=:userid AND year(`OrderDate`)=:cy GROUP BY  M ORDER BY M';
+    'select date_part('+#39+'month'+#39+', order_create_date) M, SUM(orders.order_cost) c FROM orders WHERE user_id=:userid AND date_part('+#39+'year'+#39+', order_create_date)=:cy GROUP BY  M ORDER BY M';
+
   UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
   UniQuery10.ParamByName('userid').AsString := UserID;
   UniQuery10.ExecSQL;
@@ -2079,7 +2155,7 @@ begin
     StringGrid2.Cells[0, y] :=
       numbertomonth(UniDataSource8.DataSet.FieldByName('M').AsInteger);
     StringGrid2.Cells[1, y] := UniDataSource8.DataSet.FieldByName
-      ('cost').AsString;
+      ('c').AsString;
 
     inc(y);
     UniDataSource8.DataSet.Next;
@@ -2153,7 +2229,7 @@ begin
     end
     else
     begin
-      UniQuery5.ParamByName('ordStatus').Clear;
+      UniQuery5.ParamByName('ordStatus').AsInteger:= findStatusByID(orderstatus.ItemIndex + 1);
     end;
     UniQuery5.ParamByName('userid').AsInteger := StrToInt(UserID);
 
@@ -2379,12 +2455,12 @@ begin
   if (MainTab.TabIndex = 2) then
   begin
 
-    // DELETE FROM `CRM`.`orders` WHERE `orders`.`idOrder` = 11
+
 
     UniQuery5.SQL.Text :=
-      'DELETE FROM CRM.orders WHERE orders.idOrder = :deletedid';
+      'DELETE FROM orders WHERE orders.id = :deletedid';
     UniQuery5.ParamByName('deletedid').value :=
-      UniDataSource5.DataSet.FieldByName('idOrder').AsInteger;
+      UniDataSource5.DataSet.FieldByName('id').AsInteger;
     UniQuery5.Execute;
 
 ShowMessage('Заказ удален!');
@@ -2394,9 +2470,9 @@ ShowMessage('Заказ удален!');
   begin
 
     UniQuery5.SQL.Text :=
-      'DELETE FROM clients WHERE clients.ID_clients = :deletedid';
+      'DELETE FROM clients WHERE clients.id = :deletedid';
     UniQuery5.ParamByName('deletedid').value :=
-      UniDataSource1.DataSet.FieldByName('ID_clients').AsInteger;
+      UniDataSource1.DataSet.FieldByName('id').AsInteger;
     UniQuery5.Execute;
 
     ShowMessage('Клиент удален!');
@@ -2418,26 +2494,17 @@ begin
 
     editBtn.Enabled := FALSE;
     UniQuery5.SQL.Text :=
-      'UPDATE CRM.orders SET OrderName = :ordName, Customer = :ordCustomer, OrderRecieve = :ordRec, OrderDate = :ordDate, JobType = :ordJobType, OrderCost = :ordCost, orderstatus = :ordStatus WHERE orders.idOrder = :ordID';
+      'UPDATE orders SET order_short_name = :ordName, client = :ordCustomer, order_create_date = :ordRec, order_deadline = :ordDate, order_type = :ordJobType, order_cost = :ordCost, order_status = :ordStatus WHERE orders.id = :ordID';
 
     UniQuery5.ParamByName('ordName').AsString := OrderName.Text;
-    UniQuery5.ParamByName('ordCustomer').AsString :=
-      inttostr(CustomerArr[Customer.ItemIndex]);
-    UniQuery5.ParamByName('ordJobType').AsString :=
-      inttostr((Jobstype.ItemIndex) + 1);
+    UniQuery5.ParamByName('ordCustomer').AsString := inttostr(CustomerArr[Customer.ItemIndex]);
+    UniQuery5.ParamByName('ordJobType').AsString :=  inttostr((Jobstype.ItemIndex) + 1);
 
-    UniQuery5.ParamByName('ordRec').AsString := FormatDateTime('yyyy-mm-dd ',
-      (RecieveDate.Date));
-    UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ',
-      (OrderDate.Date));
+    UniQuery5.ParamByName('ordRec').AsString := FormatDateTime('yyyy-mm-dd ', (RecieveDate.Date));
+    UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ', (OrderDate.Date));
     UniQuery5.ParamByName('ordCost').AsString := OrderCost.Text;
-    UniQuery5.ParamByName('ordStatus').AsString :=
-      inttostr(orderstatus.ItemIndex+1);
-    UniQuery5.ParamByName('ordID').AsString :=
-      UniDataSource5.DataSet.FieldByName('idOrder').AsString;
-
-
-    // ordID
+    UniQuery5.ParamByName('ordStatus').AsInteger := findStatusByID(orderstatus.ItemIndex+1);
+    UniQuery5.ParamByName('ordID').AsString := UniDataSource5.DataSet.FieldByName('id').AsString;
 
     UniQuery5.Execute;
     editBtn.Enabled := true;
@@ -2453,38 +2520,16 @@ begin
 
     editBtn.Enabled := FALSE;
     UniQuery5.SQL.Text :=
-      'UPDATE clients SET Name = :clName, Phone = :clPhone, Email = :clEmail, ClientFrom = :clFrom, Birthday = :clBD, Status = :clStatus, EditDateTime = :editdate WHERE clients.ID_clients = :clientid';
+      'UPDATE clients SET Name = :clName, Phone = :clPhone, Email = :clEmail, ClientFrom = :clFrom, Birthday = :clBD WHERE clients.id = :clientid';
 
     UniQuery5.ParamByName('clientid').value :=
-      UniDataSource1.DataSet.FieldByName('ID_clients').AsInteger;
+      UniDataSource1.DataSet.FieldByName('id').AsInteger;
     UniQuery5.ParamByName('clName').AsString := eName.Text;
     UniQuery5.ParamByName('clPhone').AsString := ePhone.Text;
     UniQuery5.ParamByName('clEmail').AsString := eEmail.Text;
-    UniQuery5.ParamByName('editdate').AsString := finalsigninDateTime;
-
-    // UniQuery5.ParamByName('userid').AsString := DBEdit6.Text;
-
-
-     UniQuery5.ParamByName('clStatus').AsString := inttostr(ComboBox1.ItemIndex+1);
-
-
+//    UniQuery5.ParamByName('editdate').AsString := finalsigninDateTime;
     UniQuery5.ParamByName('clFrom').AsString := inttostr(ComboBox2.ItemIndex+1);
-
-    // UniQuery5.ParamByName('clBD').AsString := FormatDateTime('yyyy-mm-dd ', (StrToDate(dbeClBirthday.Text)));
-    UniQuery5.ParamByName('clBD').AsString := FormatDateTime('yyyy-mm-dd ',
-      (TestDate.Date));
-
-
-    // myDate := Date;
-    // myTime := Time;
-
-    // FinalDate := FormatDateTime('yyyy-mm-dd ', myDate);
-
-    // ShowMessage('Fin = ' + (FinalDate));
-    // OrderDateTime := FinalDate + ' ' + TimeToStr(myTime);
-    // OrderDateTime := '2017-01-02 00:00:00';
-
-    // UniQuery5.ParamByName('orderdate').AsString := OrderDateTime;
+    UniQuery5.ParamByName('clBD').AsString := FormatDateTime('yyyy-mm-dd ', (TestDate.Date));
     UniQuery5.Execute;
 
     // SaveBtn.Visible := false;
