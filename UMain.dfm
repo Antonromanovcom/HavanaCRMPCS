@@ -719,7 +719,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = ReportTab
+    ActivePage = OrderTab
     TabOrder = 0
     object TabSheet3: TTabSheet
       Caption = #1042#1093#1086#1076
@@ -4592,6 +4592,15 @@ object Form1: TForm1
         Height = 21
         TabOrder = 7
         Text = 'ComboBox3'
+      end
+      object Button13: TButton
+        Left = 16
+        Top = 144
+        Width = 75
+        Height = 25
+        Caption = 'Button13'
+        TabOrder = 8
+        OnClick = Button13Click
       end
     end
     object UserTab: TTabSheet
