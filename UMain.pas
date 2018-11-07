@@ -154,6 +154,9 @@ type
     Image3: TImage;
     PostgreSQLUniProvider1: TPostgreSQLUniProvider;
     Button13: TButton;
+    UniConnection2: TUniConnection;
+    UniConnection3: TUniConnection;
+    orderType: TEdit;
 
     procedure Activate();
     procedure FormActivate(Sender: TObject);
@@ -190,6 +193,8 @@ type
     procedure TabSheet2Show(Sender: TObject);
     procedure TabSheet3Show(Sender: TObject);
     procedure Button13Click(Sender: TObject);
+    procedure DeleteItem(Node: TTreeNode);
+
 
   private
     { Private declarations }
@@ -217,6 +222,7 @@ type
     function findJobByID(a: Integer): Integer;
     function findIDByJob(b: Integer): Integer;
     function findStatusByID(b: Integer): Integer;
+    function findOrderTupeByID(i: Integer): String;
 
   var
     root: TTreeNode;
@@ -527,8 +533,6 @@ begin
   if JobsDictionary.ContainsValue(b) then
   begin
 
-    // findIDByJob  :=  JobsDictionary.;
-
     for key in JobsDictionary.Keys do
     begin
       if (JobsDictionary[key] = b) then
@@ -536,14 +540,13 @@ begin
         findIDByJob := key;
         Break;
       end;
-      // ShowMessage(IntToStr(key) + " - " +IntToStr(JobsDictionary[key]));
+
     end;
   end
   else
   begin
     findIDByJob := -1; // не нашли значение
   end;
-
 end;
 
 function TForm1.findJobByID(a: Integer): Integer;
@@ -559,6 +562,17 @@ begin
   begin
     findJobByID := -1; // не нашли ключ
   end;
+end;
+
+function TForm1.findOrderTupeByID(i: Integer): String;
+begin
+
+
+UniQuery10.Close;
+Form1.UniQuery10.SQL.Text :='SELECT * FROM ordertypes WHERE id = :id';
+Form1.UniQuery10.ParamByName('id').AsInteger := i;
+Form1.UniQuery10.ExecSQL;
+findOrderTupeByID:= UniQuery10.FieldByName('type').AsString;
 end;
 
 function TForm1.findStatusByID(b: Integer): Integer;
@@ -1343,7 +1357,6 @@ begin
   // =============================== COMBO BOX JOBS TYPE FILLING ==========
 
   UniQuery9.SQL.Text := 'SELECT * FROM ordertypes;';
-  // UniQuery8.ParamByName('userid').AsString := UserID;
   UniQuery9.Execute;
 
   jobstypeRecCount := UniDataSource7.DataSet.RecordCount;
@@ -1354,15 +1367,15 @@ begin
   for j := 1 to jobstypeRecCount do
   begin
 
-    // sItem := UniDataSource7.DataSet.FieldByName('type').AsString;
+
     sItem := UniDataSource7.DataSet.FieldByName('type').AsString + ' - ' +
-      UniDataSource7.DataSet.FieldByName('id').AsString + ' - ' + inttostr(j);
+    UniDataSource7.DataSet.FieldByName('id').AsString + ' - ' + inttostr(j);
     JobsDictionary.Add(j, UniDataSource7.DataSet.FieldByName('id').AsInteger);
     // Кладем в мапу j и айдишник из базы чтобы потом их соотносить.
     sItemHelp := Format(sItem, [j]);
-
     UniDataSource7.DataSet.Next;
     Jobstype.Items.AddObject(sItem, TObject(j));
+
   end;
 
   UniDataSource2.DataSet.First;
@@ -1571,6 +1584,21 @@ begin
 
 end;
 
+
+procedure TForm1.DeleteItem(Node: TTreeNode);
+var i:integer;
+begin
+
+if Node.HasChildren then
+begin
+    for i:=Node.Count-1 downto 0 do
+    begin
+      DeleteItem(Node.Item[i]);
+      Node.Item[i].Delete;
+    end;
+end;
+end;
+
 procedure TForm1.Button13Click(Sender: TObject);
 var
     MyNode2: TFruit;
@@ -1582,7 +1610,6 @@ var
     selectedType, selectedSubType, selectedPlan: Integer;
 begin
   Form3.Show;
-
 
   // -- Подключаемся к базе и запрашиваем типы заказов
   Form3.orderTypes_UQ.Connection := Form1.UniConnection1;
@@ -1599,7 +1626,6 @@ begin
     with Form3.Treeview1 do
         begin
           MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, -1, -1);    // -1 - значит верхняя нода
-          //typeCode:= 'T' + Form3.orderTypes_UQ.FieldByName('id').AsString; //формируем текстовой код-ID ТИПА
           root:=Items.AddChildObject(Selected, Form3.orderTypes_UQ.FieldByName('type').AsString, pointer(MyNode2));
           Form3.orderSubTypes_UQ.SQL.Text := 'SELECT * FROM subtype s WHERE s.parent_type_id = :parentordertype;';
           parentTypeID:= Form3.orderTypes_UQ.FieldByName('id').AsInteger;
@@ -1609,9 +1635,8 @@ begin
           // Подтипы
           while (not Form3.orderSubTypes_UQ.Eof) do
               begin
-               MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, Form3.orderSubTypes_UQ.FieldByName('id').AsInteger, -1);    // кладем подтип
 
-                // typeCode:= typeCode + 'S' + IntToStr(selectedSubType); //формируем текстовой код-ID ПОД-ТИПА
+                 MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, Form3.orderSubTypes_UQ.FieldByName('id').AsInteger, -1);    // кладем подтип
                  NewNode:=Items.AddChildObject(root, Form3.orderSubTypes_UQ.FieldByName('subtype_name').AsString, pointer(MyNode2));
                  Form3.orderPlans_UQ.SQL.Text := 'SELECT * FROM plans p  WHERE p.parent_subtype_id = :parentsubtype;';
                  parentSubTypeID:= Form3.orderSubTypes_UQ.FieldByName('id').AsInteger;
@@ -1621,8 +1646,7 @@ begin
                  // Планы
                  while (not Form3.orderPlans_UQ.Eof) do
                  begin
-                                  MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, Form3.orderSubTypes_UQ.FieldByName('id').AsInteger, Form3.orderPlans_UQ.FieldByName('id').AsInteger);    // кладем план
-                 //   typeCode:= typeCode + 'P' + IntToStr(selectedPlan); //формируем текстовой код-ID ПОД-ТИПА
+                    MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, Form3.orderSubTypes_UQ.FieldByName('id').AsInteger, Form3.orderPlans_UQ.FieldByName('id').AsInteger);    // кладем план
                     NewPlan:=Items.AddChildObject(NewNode, Form3.orderPlans_UQ.FieldByName('plan_name').AsString, pointer(MyNode2));
                     Form3.orderPlans_UQ.Next;
 
@@ -1643,23 +1667,71 @@ begin
       selectedSubType:= UniDataSource5.DataSet.FieldByName('order_sub_type').asInteger;
       selectedPlan:= UniDataSource5.DataSet.FieldByName('order_plan').asInteger;
 
-    // 2 - перевести в ключ
-    // 3 - найти по ключу
+    // 2 - найти по ключу
 
+    //MyNode3 :=   TreeView1.Selected.Data;
     with Form3.Treeview1 do
     begin
-  Select(Items.GetFirstNode);
-  for i := 0 to Items.Count - 1 do
-  begin
-    if Items[i].Text = 'Эконом' then
+    Select(Items.GetFirstNode);
+    for i := 0 to Items.Count - 1 do
     begin
+
+   // Сначала нам надо проверить все планы
       Select(Items[i]);
-      SetFocus;
-      Exit;
-    end;
+      MyNode2:= Selected.Data;
+
+          if MyNode2.Plan=selectedPlan then
+          begin
+            SetFocus;
+            Exit;
+          end;
+
   end;
-  ShowMessage('Ничего не найдено!');
+
+    //--------------------------------------
+    // Не нашли планы. Ищем Подтипы
+     Select(Items.GetFirstNode);
+    for i := 0 to Items.Count - 1 do
+    begin
+
+         Select(Items[i]);
+         MyNode2:= Selected.Data;
+
+
+          if  MyNode2.orderSubType=selectedSubType then
+          begin
+            SetFocus;
+            Exit;
+          end;
+     end;
+
+   //--------------------------------------
+  // Не нашли подтипы. Ищем Типы
+     Select(Items.GetFirstNode);
+    for i := 0 to Items.Count - 1 do
+    begin
+
+         Select(Items[i]);
+         MyNode2:= Selected.Data;
+
+          if  MyNode2.orderType=selectedType then
+          begin
+            SetFocus;
+            Exit;
+          end;
+    end;
+
+  //нет заданного типа работ
+  MessageDlg('У данного заказа нет ни типа, ни подтипа, ни плана. Выберете что-нибудь!', mtWarning, [mbOk], 0);
+  Select(Items[0]);
+  SetFocus;
+
+
 end;
+
+
+
+
 
 
 end;
@@ -1673,6 +1745,7 @@ var
   value: Integer;
   ListIndex: Integer;
   CustomerID: Integer;
+  localOrderType: String;
 
 begin
 
@@ -1698,9 +1771,9 @@ begin
 
     // Получаем тип заказа
     // Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
-    Jobstype.ItemIndex :=
-      findIDByJob(UniDataSource5.DataSet.FieldByName('order_type')
-      .AsInteger) - 1;
+    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger);
+    Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    orderType.Text:=localOrderType;
 
     Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
@@ -1708,9 +1781,7 @@ begin
     then
       RecieveDate.Date := Date
     else
-      RecieveDate.Date :=
-        StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date')
-        .AsString);
+      RecieveDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
 
     if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
       OrderDate.Date := Date

@@ -4595,8 +4595,8 @@ object Form1: TForm1
         Text = 'ComboBox3'
       end
       object Button13: TButton
-        Left = 16
-        Top = 144
+        Left = 472
+        Top = 352
         Width = 75
         Height = 25
         Caption = 'Button13'
@@ -5878,6 +5878,15 @@ object Form1: TForm1
     TabOrder = 17
     OnClick = Button12Click
   end
+  object orderType: TEdit
+    Left = 136
+    Top = 449
+    Width = 325
+    Height = 21
+    Enabled = False
+    TabOrder = 18
+    Text = 'orderType'
+  end
   object UniQuery1: TUniQuery
     Connection = UniConnection1
     SQL.Strings = (
@@ -6023,5 +6032,13 @@ object Form1: TForm1
   object PostgreSQLUniProvider1: TPostgreSQLUniProvider
     Left = 684
     Top = 7
+  end
+  object UniConnection2: TUniConnection
+    Left = 464
+    Top = 288
+  end
+  object UniConnection3: TUniConnection
+    Left = 416
+    Top = 296
   end
 end
