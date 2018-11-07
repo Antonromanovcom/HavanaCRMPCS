@@ -226,8 +226,9 @@ type
  TFruit = class
   public
     name   : string;
-    Constructor Create; overload;   // This constructor uses defaults
-    Constructor Create(name : string); overload;
+    orderType, orderSubType, Plan   : integer;
+    Constructor Create; overload;
+    Constructor Create(orderType, orderSubType, Plan : integer); overload;
   end;
 
 
@@ -1574,57 +1575,92 @@ procedure TForm1.Button13Click(Sender: TObject);
 var
     MyNode2: TFruit;
     NewNode: TTreeNode;
-    var Index: Integer;
+    NewPlan: TTreeNode;
+    typeCode, subTypeCode, plan: String;
+    parentTypeID: Integer;
+    parentSubTypeID, i: Integer;
+    selectedType, selectedSubType, selectedPlan: Integer;
 begin
   Form3.Show;
 
+
   // -- Подключаемся к базе и запрашиваем типы заказов
   Form3.orderTypes_UQ.Connection := Form1.UniConnection1;
-  Form3.orderTypes_UQ.SQL.Text :=
-    'SELECT * FROM ordertypes WHERE user_id = :userid;';
+  Form3.orderSubTypes_UQ.Connection := Form1.UniConnection1;
+  Form3.orderTypes_UQ.SQL.Text := 'SELECT * FROM ordertypes WHERE user_id = :userid;';
   Form3.orderTypes_UQ.ParamByName('userid').AsString := UserID;
   Form3.orderTypes_UQ.Execute;
+//  typeCode:='R1' + IntToStr(Form3.orderTypes_UQ.FieldByName('id').AsInteger);
 
-  // -- Рапихиваем их в дерево
-    MyNode2:=TFruit.Create('11');
-        root := Form3.Treeview1.Items.Add(Form3.Treeview1.Selected, Form3.orderTypes_UQ.FieldByName('type').AsString);
-  //while (not Form3.orderTypes_UQ.Eof) do
-  begin
+
+  // -- Раcпихиваем Типы в дерево
+  while (not Form3.orderTypes_UQ.Eof) do
+      begin
     with Form3.Treeview1 do
-     begin
-//    root := Items.Add(Form3.Treeview1.Selected, Form3.orderTypes_UQ.FieldByName('type').AsString);
-//    Items.AddObject(nil, 'Item', TFruit('13'));
-   // Form3.Treeview1.Items.AddChild(root, 'Новая подстрока');
-   Index := 145;
-//   NewNode:=Items.AddChildObject(nil, 'New Item', pointer(Index));
-      NewNode:=Items.AddChildObject(nil, 'New Item', pointer(MyNode2));
-//    NewNode.Data:=Pointer(1);
-   // Form3.orderTypes_UQ.Next;
+        begin
+          MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, -1, -1);    // -1 - значит верхняя нода
+          //typeCode:= 'T' + Form3.orderTypes_UQ.FieldByName('id').AsString; //формируем текстовой код-ID ТИПА
+          root:=Items.AddChildObject(Selected, Form3.orderTypes_UQ.FieldByName('type').AsString, pointer(MyNode2));
+          Form3.orderSubTypes_UQ.SQL.Text := 'SELECT * FROM subtype s WHERE s.parent_type_id = :parentordertype;';
+          parentTypeID:= Form3.orderTypes_UQ.FieldByName('id').AsInteger;
+          Form3.orderSubTypes_UQ.ParamByName('parentordertype').AsInteger := parentTypeID;
+          Form3.orderSubTypes_UQ.Execute;
 
+          // Подтипы
+          while (not Form3.orderSubTypes_UQ.Eof) do
+              begin
+               MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, Form3.orderSubTypes_UQ.FieldByName('id').AsInteger, -1);    // кладем подтип
 
- {
-У TTreeNode есть свойство Data, куда можно засунуть такой номер
-Код:
+                // typeCode:= typeCode + 'S' + IntToStr(selectedSubType); //формируем текстовой код-ID ПОД-ТИПА
+                 NewNode:=Items.AddChildObject(root, Form3.orderSubTypes_UQ.FieldByName('subtype_name').AsString, pointer(MyNode2));
+                 Form3.orderPlans_UQ.SQL.Text := 'SELECT * FROM plans p  WHERE p.parent_subtype_id = :parentsubtype;';
+                 parentSubTypeID:= Form3.orderSubTypes_UQ.FieldByName('id').AsInteger;
+                 Form3.orderPlans_UQ.ParamByName('parentsubtype').AsInteger := parentSubTypeID;
+                 Form3.orderPlans_UQ.Execute;
 
-var Index: Integer;
-...
-  Node:=TreeView1.Items.AddObject(Nil,'KKK',Pointer(Index));
-  Node:=TreeView1.Items.AddChildObject(Node,'GGG',Pointer(Index));
-или
-  Node.Data:=Pointer(Index);
+                 // Планы
+                 while (not Form3.orderPlans_UQ.Eof) do
+                 begin
+                                  MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, Form3.orderSubTypes_UQ.FieldByName('id').AsInteger, Form3.orderPlans_UQ.FieldByName('id').AsInteger);    // кладем план
+                 //   typeCode:= typeCode + 'P' + IntToStr(selectedPlan); //формируем текстовой код-ID ПОД-ТИПА
+                    NewPlan:=Items.AddChildObject(NewNode, Form3.orderPlans_UQ.FieldByName('plan_name').AsString, pointer(MyNode2));
+                    Form3.orderPlans_UQ.Next;
 
-Прочитать значение можно так
-Код:
+                 end;
 
-  Index:=Integer(Node.Data);
+                 Form3.orderSubTypes_UQ.Next;
 
-Поиск нужного TreeNode по номеру путем перебора
+          end;
+        Form3.orderTypes_UQ.Next;
+      end;
+    end;
 
-   }
+    // ---- Выделение ----
 
+    // 1 - определить что у нас выделено
 
-     end;
-       end;
+      selectedType:= UniDataSource5.DataSet.FieldByName('order_type').asInteger;
+      selectedSubType:= UniDataSource5.DataSet.FieldByName('order_sub_type').asInteger;
+      selectedPlan:= UniDataSource5.DataSet.FieldByName('order_plan').asInteger;
+
+    // 2 - перевести в ключ
+    // 3 - найти по ключу
+
+    with Form3.Treeview1 do
+    begin
+  Select(Items.GetFirstNode);
+  for i := 0 to Items.Count - 1 do
+  begin
+    if Items[i].Text = 'Эконом' then
+    begin
+      Select(Items[i]);
+      SetFocus;
+      Exit;
+    end;
+  end;
+  ShowMessage('Ничего не найдено!');
+end;
+
 
 end;
 
@@ -1640,18 +1676,19 @@ var
 
 begin
 
-  if (MainTab.TabIndex = 2) then
-  begin
+    if (MainTab.TabIndex = 2) then
+      begin
 
-    UniDataSource5.DataSet.Next;
-    OrderName.Text := UniDataSource5.DataSet.FieldByName
-      ('order_short_name').AsString;
-    OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status')
-      .AsInteger) - 1;
+        UniDataSource5.DataSet.Next;
+        OrderName.Text := UniDataSource5.DataSet.FieldByName
+          ('order_short_name').AsString;
+        OrderCost.Text := UniDataSource5.DataSet.FieldByName
+          ('order_cost').AsString;
+        orderstatus.ItemIndex :=
+          (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
 
-    ListIndex := 0;
-    CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
+        ListIndex := 0;
+        CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
     ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
 
     if (ListIndex = -1) then
@@ -3123,9 +3160,11 @@ begin
 
 end;
 
-constructor TFruit.Create(name: string);
+constructor TFruit.Create(orderType, orderSubType, Plan : integer);
 begin
-Self.name := name;
+Self.orderType := orderType;
+Self.orderSubType := orderSubType;
+Self.Plan := Plan;
 end;
 
 end.

@@ -4470,6 +4470,7 @@ object Form1: TForm1
       Caption = #1047#1072#1082#1072#1079#1099
       ImageIndex = 3
       OnShow = OrderTabShow
+      ExplicitLeft = 1
       object ordIDlbl: TLabel
         Left = 92
         Top = 16
