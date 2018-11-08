@@ -4,7 +4,7 @@ object Form3: TForm3
   BorderStyle = bsDialog
   Caption = #1058#1080#1087#1099' '#1047#1072#1082#1072#1079#1086#1074
   ClientHeight = 465
-  ClientWidth = 541
+  ClientWidth = 812
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -50,6 +50,15 @@ object Form3: TForm3
     Caption = #1053#1072#1081#1090#1080
     Enabled = False
     TabOrder = 3
+  end
+  object options: TListView
+    Left = 541
+    Top = 3
+    Width = 268
+    Height = 406
+    Columns = <>
+    Enabled = False
+    TabOrder = 4
   end
   object orderTypes_UQ: TUniQuery
     Left = 24

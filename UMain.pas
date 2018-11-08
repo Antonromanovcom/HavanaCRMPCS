@@ -157,6 +157,8 @@ type
     UniConnection2: TUniConnection;
     UniConnection3: TUniConnection;
     orderType: TEdit;
+    OrderSubType: TEdit;
+    OrderPlan: TEdit;
 
     procedure Activate();
     procedure FormActivate(Sender: TObject);
@@ -223,6 +225,8 @@ type
     function findIDByJob(b: Integer): Integer;
     function findStatusByID(b: Integer): Integer;
     function findOrderTupeByID(i: Integer): String;
+    function findOrderSubTypeByID(i: Integer): String;
+    function findOrderPlanByID(i: Integer): String;
 
   var
     root: TTreeNode;
@@ -564,9 +568,34 @@ begin
   end;
 end;
 
-function TForm1.findOrderTupeByID(i: Integer): String;
+function TForm1.findOrderPlanByID(i: Integer): String;
+// Ищем план по id
 begin
 
+UniQuery10.Close;
+Form1.UniQuery10.SQL.Text :='SELECT * FROM plans WHERE id = :id';
+Form1.UniQuery10.ParamByName('id').AsInteger := i;
+Form1.UniQuery10.ExecSQL;
+findOrderPlanByID:= UniQuery10.FieldByName('plan_name').AsString;
+
+
+end;
+
+function TForm1.findOrderSubTypeByID(i: Integer): String;
+// Ищем подтип по id
+begin
+
+UniQuery10.Close;
+Form1.UniQuery10.SQL.Text :='SELECT * FROM subtype WHERE id = :id';
+Form1.UniQuery10.ParamByName('id').AsInteger := i;
+Form1.UniQuery10.ExecSQL;
+findOrderSubTypeByID:= UniQuery10.FieldByName('subtype_name').AsString;
+
+end;
+
+function TForm1.findOrderTupeByID(i: Integer): String;
+// Ищем тип по id
+begin
 
 UniQuery10.Close;
 Form1.UniQuery10.SQL.Text :='SELECT * FROM ordertypes WHERE id = :id';
@@ -1745,7 +1774,7 @@ var
   value: Integer;
   ListIndex: Integer;
   CustomerID: Integer;
-  localOrderType: String;
+  localOrderType, localOrderSubType, localOrderPlan: String;
 
 begin
 
@@ -1753,16 +1782,13 @@ begin
       begin
 
         UniDataSource5.DataSet.Next;
-        OrderName.Text := UniDataSource5.DataSet.FieldByName
-          ('order_short_name').AsString;
-        OrderCost.Text := UniDataSource5.DataSet.FieldByName
-          ('order_cost').AsString;
-        orderstatus.ItemIndex :=
-          (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+        OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+        OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+        orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
 
         ListIndex := 0;
         CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
-    ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
+        ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
 
     if (ListIndex = -1) then
       Customer.Text := ''
@@ -1771,9 +1797,35 @@ begin
 
     // Получаем тип заказа
     // Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
-    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger);
+    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+    localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+    localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+    // Обрезаем строки
+    if (Length(localOrderSubType)>22) then
+    begin
+      Delete(localOrderSubType, 22, Length(localOrderSubType));
+      localOrderSubType:=localOrderSubType+'...';
+    end;
+
     Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
     orderType.Text:=localOrderType;
+    OrderSubType.Text:=localOrderSubType;
+    OrderPlan.Text:=localOrderPlan;
+
+
+    // Меняем текст кнопки
+    if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+    begin
+    Button13.Caption:='Добавить Тип Заказа';
+    end
+    else
+    begin
+         Button13.Caption:='Изменить Тип Заказа';
+    end;
+
+
+
 
     Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
@@ -1838,17 +1890,16 @@ var
   value: Integer;
   ListIndex: Integer;
   CustomerID: Integer;
+  localOrderType, localOrderSubType, localOrderPlan: String;
 
 begin
   if (MainTab.TabIndex = 2) then
   begin
 
     UniDataSource5.DataSet.Prior;
-    OrderName.Text := UniDataSource5.DataSet.FieldByName
-      ('order_short_name').AsString;
+    OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
     OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status')
-      .AsInteger) - 1;
+    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
 
     ListIndex := 0;
     CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
@@ -1859,8 +1910,43 @@ begin
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type')
-      .AsInteger) - 1;
+    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+
+    // Получаем тип заказа
+    // Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+    localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+    localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+
+// Обрезаем строки
+    if (Length(localOrderSubType)>22) then
+    begin
+      Delete(localOrderSubType, 22, Length(localOrderSubType));
+      localOrderSubType:=localOrderSubType+'...';
+    end;
+
+    orderType.Text:=localOrderType;
+    OrderSubType.Text:=localOrderSubType;
+    OrderPlan.Text:=localOrderPlan;
+
+
+
+
+
+
+    // Меняем текст кнопки
+    if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+    begin
+    Button13.Caption:='Добавить Тип Заказа';
+    end
+    else
+    begin
+         Button13.Caption:='Изменить Тип Заказа';
+    end;
+
+
+
     Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
     if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = ''
@@ -1868,14 +1954,12 @@ begin
       RecieveDate.Date := Date
     else
       RecieveDate.Date :=
-        StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date')
-        .AsString);
+        StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
 
     if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
       OrderDate.Date := Date
     else
-      OrderDate.Date := StrToDateTime
-        (UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
+      OrderDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
 
     StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +
       inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
@@ -1893,7 +1977,7 @@ begin
     eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
     ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
     eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
-    // eOrderedDate.Text := UniDataSource1.DataSet.FieldByName('OrderDateTime').AsString;
+
 
     if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
       TestDate.Date := Date
@@ -1901,7 +1985,7 @@ begin
       TestDate.Date := StrToDateTime
         (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
 
-    // ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status').AsInteger) - 1;
+
     ComboBox2.ItemIndex :=
       (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
 
@@ -1951,6 +2035,7 @@ var
   value: Integer;
   ListIndex: Integer;
   CustomerID: Integer;
+  localOrderType, localOrderSubType, localOrderPlan: String;
 
 begin
 
@@ -1973,9 +2058,38 @@ begin
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type')
-      .AsInteger) - 1;
+//    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
     Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
+
+     // Получаем тип заказа
+    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+    localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+    localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+    // Обрезаем строки
+    if (Length(localOrderSubType)>22) then
+    begin
+      Delete(localOrderSubType, 22, Length(localOrderSubType));
+      localOrderSubType:=localOrderSubType+'...';
+    end;
+
+    Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    orderType.Text:=localOrderType;
+    OrderSubType.Text:=localOrderSubType;
+    OrderPlan.Text:=localOrderPlan;
+
+
+    // Меняем текст кнопки
+    if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+    begin
+    Button13.Caption:='Добавить Тип Заказа';
+    end
+    else
+    begin
+         Button13.Caption:='Изменить Тип Заказа';
+    end;
+
+
 
     if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = ''
     then
@@ -2061,6 +2175,7 @@ var
   LCount: Integer;
   ListIndex: Integer;
   CustomerID: Integer;
+  localOrderType, localOrderSubType, localOrderPlan: String;
 
 begin
 
@@ -2083,9 +2198,39 @@ begin
     else
       Customer.ItemIndex := ListIndex;
 
-    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type')
-      .AsInteger) - 1;
+//    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
     Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
+
+
+     // Получаем тип заказа
+    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+    localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+    localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+    // Обрезаем строки
+    if (Length(localOrderSubType)>22) then
+    begin
+      Delete(localOrderSubType, 22, Length(localOrderSubType));
+      localOrderSubType:=localOrderSubType+'...';
+    end;
+
+    Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    orderType.Text:=localOrderType;
+    OrderSubType.Text:=localOrderSubType;
+    OrderPlan.Text:=localOrderPlan;
+
+
+    // Меняем текст кнопки
+    if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+    begin
+    Button13.Caption:='Добавить Тип Заказа';
+    end
+    else
+    begin
+         Button13.Caption:='Изменить Тип Заказа';
+    end;
+
+
 
     if (UniDataSource5.DataSet.FieldByName('client').AsString) = '' then
       RecieveDate.Date := Date

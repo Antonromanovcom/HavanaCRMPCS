@@ -4470,7 +4470,6 @@ object Form1: TForm1
       Caption = #1047#1072#1082#1072#1079#1099
       ImageIndex = 3
       OnShow = OrderTabShow
-      ExplicitLeft = 1
       object ordIDlbl: TLabel
         Left = 92
         Top = 16
@@ -4486,17 +4485,17 @@ object Form1: TForm1
         Caption = #1054#1087#1080#1089#1072#1085#1080#1077' '#1079#1072#1082#1072#1079#1072
       end
       object ordClientlbl: TLabel
-        Left = 90
-        Top = 85
+        Left = 91
+        Top = 88
         Width = 47
         Height = 13
         Caption = #1047#1072#1082#1072#1079#1095#1080#1082
       end
       object ordJobsTypelbl: TLabel
-        Left = 90
-        Top = 128
+        Left = 92
+        Top = 138
         Width = 51
-        Height = 13
+        Height = 16
         Caption = #1058#1080#1087' '#1088#1072#1073#1086#1090
       end
       object ordRecievelbl: TLabel
@@ -4553,12 +4552,13 @@ object Form1: TForm1
         Text = 'Customer'
       end
       object Jobstype: TComboBox
-        Left = 243
-        Top = 128
-        Width = 602
+        Left = 90
+        Top = 109
+        Width = 54
         Height = 21
         TabOrder = 3
         Text = 'Jobstype'
+        Visible = False
       end
       object RecieveDate: TDateTimePicker
         Left = 243
@@ -4595,13 +4595,43 @@ object Form1: TForm1
         Text = 'ComboBox3'
       end
       object Button13: TButton
-        Left = 472
-        Top = 352
-        Width = 75
+        Left = 721
+        Top = 131
+        Width = 124
         Height = 25
-        Caption = 'Button13'
+        Caption = #1048#1079#1084#1077#1085#1080#1090#1100' '#1058#1080#1087' '#1047#1072#1082#1072#1079#1072
         TabOrder = 8
         OnClick = Button13Click
+      end
+      object orderType: TEdit
+        Left = 243
+        Top = 133
+        Width = 194
+        Height = 21
+        Alignment = taCenter
+        Enabled = False
+        TabOrder = 9
+        Text = '...'
+      end
+      object OrderSubType: TEdit
+        Left = 443
+        Top = 133
+        Width = 138
+        Height = 21
+        Alignment = taCenter
+        Enabled = False
+        TabOrder = 10
+        Text = '...'
+      end
+      object OrderPlan: TEdit
+        Left = 587
+        Top = 133
+        Width = 128
+        Height = 21
+        Alignment = taCenter
+        Enabled = False
+        TabOrder = 11
+        Text = '...'
       end
     end
     object UserTab: TTabSheet
@@ -5494,6 +5524,7 @@ object Form1: TForm1
     end
     object ReportTab: TTabSheet
       Caption = #1054#1090#1095#1077#1090#1099
+      Enabled = False
       ImageIndex = 6
       OnShow = ReportTabShow
       object PageControl1: TPageControl
@@ -5501,7 +5532,7 @@ object Form1: TForm1
         Top = 3
         Width = 846
         Height = 393
-        ActivePage = TabSheet6
+        ActivePage = TabSheet5
         MultiLine = True
         TabOrder = 0
         TabPosition = tpLeft
@@ -5877,15 +5908,6 @@ object Form1: TForm1
     Caption = #1044#1072#1085#1085#1099#1077
     TabOrder = 17
     OnClick = Button12Click
-  end
-  object orderType: TEdit
-    Left = 136
-    Top = 449
-    Width = 325
-    Height = 21
-    Enabled = False
-    TabOrder = 18
-    Text = 'orderType'
   end
   object UniQuery1: TUniQuery
     Connection = UniConnection1

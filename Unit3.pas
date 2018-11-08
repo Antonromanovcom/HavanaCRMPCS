@@ -17,6 +17,7 @@ type
     addOrderTypeButton: TButton;
     deleteOrderTypeButton: TButton;
     findOrderTypeButton: TButton;
+    options: TListView;
     procedure TreeView1Click(Sender: TObject);
     procedure TreeView1DblClick(Sender: TObject);
 
@@ -96,13 +97,21 @@ procedure TForm3.TreeView1Click(Sender: TObject);
 var
     MyNode3: TFruit;
     typeCode: String;
+    Item: TListItem;
 begin
  if Assigned(TreeView1.Selected) then
     begin
 
-//    MyNode3 :=   TreeView1.Selected.Data;
-  //  ShowMessage(TreeView1.Selected.Text + ' - ' +   IntToStr(MyNode3.orderType) + ' - ' + IntToStr(MyNode3.orderSubType)+ ' - ' + IntToStr(MyNode3.Plan));
+    // Надо определить план это или нет.
+    MyNode3 :=   TreeView1.Selected.Data;
+    if MyNode3.Plan>0 then
+    begin
+        options.Enabled:= true; // включаем список опций
+        Item := options.Items.Add;
+        Item.Caption := '1';
+        Item.SubItems.Add('2');
 
+    end;
     end
 end;
 
