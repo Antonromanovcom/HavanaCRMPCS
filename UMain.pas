@@ -196,6 +196,7 @@ type
     procedure TabSheet3Show(Sender: TObject);
     procedure Button13Click(Sender: TObject);
     procedure DeleteItem(Node: TTreeNode);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 
 
   private
@@ -209,6 +210,7 @@ type
     procedure EnableOnOrdButtons();
     procedure FirstOrder();
     procedure FirstClient();
+
 
   public
     { Public declarations }
@@ -227,6 +229,11 @@ type
     function findOrderTupeByID(i: Integer): String;
     function findOrderSubTypeByID(i: Integer): String;
     function findOrderPlanByID(i: Integer): String;
+    procedure getOptions4Plan(plan: Integer);
+    procedure noOptions();
+    procedure clearOptionList();
+    procedure loadOrderTypeTree();
+
 
   var
     root: TTreeNode;
@@ -1635,10 +1642,14 @@ var
     NewPlan: TTreeNode;
     typeCode, subTypeCode, plan: String;
     parentTypeID: Integer;
-    parentSubTypeID, i: Integer;
+    parentSubTypeID, i, x: Integer;
     selectedType, selectedSubType, selectedPlan: Integer;
 begin
   Form3.Show;
+
+  // Предварительно чистим дерево...
+
+  Form3.CleanTree();
 
   // -- Подключаемся к базе и запрашиваем типы заказов
   Form3.orderTypes_UQ.Connection := Form1.UniConnection1;
@@ -1646,7 +1657,6 @@ begin
   Form3.orderTypes_UQ.SQL.Text := 'SELECT * FROM ordertypes WHERE user_id = :userid;';
   Form3.orderTypes_UQ.ParamByName('userid').AsString := UserID;
   Form3.orderTypes_UQ.Execute;
-//  typeCode:='R1' + IntToStr(Form3.orderTypes_UQ.FieldByName('id').AsInteger);
 
 
   // -- Раcпихиваем Типы в дерево
@@ -1695,10 +1705,11 @@ begin
       selectedType:= UniDataSource5.DataSet.FieldByName('order_type').asInteger;
       selectedSubType:= UniDataSource5.DataSet.FieldByName('order_sub_type').asInteger;
       selectedPlan:= UniDataSource5.DataSet.FieldByName('order_plan').asInteger;
+      Form3.selectedPlan:= selectedPlan;
 
     // 2 - найти по ключу
 
-    //MyNode3 :=   TreeView1.Selected.Data;
+
     with Form3.Treeview1 do
     begin
     Select(Items.GetFirstNode);
@@ -1711,14 +1722,39 @@ begin
 
           if MyNode2.Plan=selectedPlan then
           begin
-            SetFocus;
-            Exit;
+
+             getOptions4Plan(selectedPlan); // Пробуем подгрузить опции для плана
+
+          // Надо заполнить поля плана
+             Form3.OptionDesc.Text:=  Form3.UDS_plans.DataSet.FieldByName('description').AsString; // заполняем Дескрипшн плана
+             Form3.PlanPrice.Text:= Form3.UDS_plans.DataSet.FieldByName('cost').AsString; // выключаем поле стоимости заказа
+             Form3.btnEditPlanPrice.Enabled:= false; // выключаем кнопку сохранения стоимости заказа так как предыдущая строчка ее включит
+             Form3.addOrderTypeButton.Enabled:=False;
+             Form3.btnEditOrderType.Enabled:=true;
+             Form3.deleteOrderTypeButton.Enabled:=true; // выключаем кнопку добавить.
+             SetFocus;
+             Exit;
           end;
 
   end;
 
     //--------------------------------------
     // Не нашли планы. Ищем Подтипы
+
+    // И надо опции занулить
+
+        Form3.OptionsExists:=false;
+        Form3.OptionsList.Enabled:= false; // выключаем список опций
+        Form3.OptionDesc.Enabled:= false; // выключаем описание плана
+        Form3.PlanPrice.Enabled:= false; // выключаем поле стоимости заказа
+        Form3.btnEditPlanPrice.Enabled:= false; // выключаем кнопку сохранения стоимости заказа или описания
+        Form3.btnAddPlanOption.Enabled:= false; // выключаем кнопку добавления новой опции
+        Form3.btnDeletePlanOption.Enabled:= false; // выключаем кнопку удаления опции
+        Form3.btnEditPlanOption.Enabled:= false; // выключаем кнопку редактирования опции
+
+        Form3.OptionsList.Items.Add('Нет опций у плана или не выбран план'); // Добавляем строку в компонент ListBox
+
+
      Select(Items.GetFirstNode);
     for i := 0 to Items.Count - 1 do
     begin
@@ -1755,14 +1791,7 @@ begin
   Select(Items[0]);
   SetFocus;
 
-
 end;
-
-
-
-
-
-
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);
@@ -2145,6 +2174,187 @@ begin
   end;
 end;
 
+// Загрузка дерева типа заказов. На данном этапе пока это дубль процедуры у кнопки редактирования типа заказа
+procedure TForm1.loadOrderTypeTree;
+var
+    MyNode2: TFruit;
+    NewNode: TTreeNode;
+    NewPlan: TTreeNode;
+    typeCode, subTypeCode, plan: String;
+    parentTypeID: Integer;
+    parentSubTypeID, i, x: Integer;
+    selectedType, selectedSubType, selectedPlan: Integer;
+begin
+
+ Form3.Show;
+
+  // Предварительно чистим дерево...
+
+  Form3.CleanTree();
+
+  // -- Подключаемся к базе и запрашиваем типы заказов
+  Form3.orderTypes_UQ.Connection := Form1.UniConnection1;
+  Form3.orderSubTypes_UQ.Connection := Form1.UniConnection1;
+  Form3.orderTypes_UQ.SQL.Text := 'SELECT * FROM ordertypes WHERE user_id = :userid;';
+  Form3.orderTypes_UQ.ParamByName('userid').AsString := UserID;
+  Form3.orderTypes_UQ.Execute;
+
+
+  // -- Раcпихиваем Типы в дерево
+  while (not Form3.orderTypes_UQ.Eof) do
+      begin
+    with Form3.Treeview1 do
+        begin
+          MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, -1, -1);    // -1 - значит верхняя нода
+          root:=Items.AddChildObject(Selected, Form3.orderTypes_UQ.FieldByName('type').AsString, pointer(MyNode2));
+          Form3.orderSubTypes_UQ.SQL.Text := 'SELECT * FROM subtype s WHERE s.parent_type_id = :parentordertype;';
+          parentTypeID:= Form3.orderTypes_UQ.FieldByName('id').AsInteger;
+          Form3.orderSubTypes_UQ.ParamByName('parentordertype').AsInteger := parentTypeID;
+          Form3.orderSubTypes_UQ.Execute;
+
+          // Подтипы
+          while (not Form3.orderSubTypes_UQ.Eof) do
+              begin
+
+                 MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, Form3.orderSubTypes_UQ.FieldByName('id').AsInteger, -1);    // кладем подтип
+                 NewNode:=Items.AddChildObject(root, Form3.orderSubTypes_UQ.FieldByName('subtype_name').AsString, pointer(MyNode2));
+                 Form3.orderPlans_UQ.SQL.Text := 'SELECT * FROM plans p  WHERE p.parent_subtype_id = :parentsubtype;';
+                 parentSubTypeID:= Form3.orderSubTypes_UQ.FieldByName('id').AsInteger;
+                 Form3.orderPlans_UQ.ParamByName('parentsubtype').AsInteger := parentSubTypeID;
+                 Form3.orderPlans_UQ.Execute;
+
+                 // Планы
+                 while (not Form3.orderPlans_UQ.Eof) do
+                 begin
+                    MyNode2:=TFruit.Create(Form3.orderTypes_UQ.FieldByName('id').AsInteger, Form3.orderSubTypes_UQ.FieldByName('id').AsInteger, Form3.orderPlans_UQ.FieldByName('id').AsInteger);    // кладем план
+                    NewPlan:=Items.AddChildObject(NewNode, Form3.orderPlans_UQ.FieldByName('plan_name').AsString, pointer(MyNode2));
+                    Form3.orderPlans_UQ.Next;
+
+                 end;
+
+                 Form3.orderSubTypes_UQ.Next;
+
+          end;
+        Form3.orderTypes_UQ.Next;
+      end;
+    end;
+
+    // ---- Выделение ----
+
+    // 1 - определить что у нас выделено
+
+      selectedType:= UniDataSource5.DataSet.FieldByName('order_type').asInteger;
+      selectedSubType:= UniDataSource5.DataSet.FieldByName('order_sub_type').asInteger;
+      selectedPlan:= UniDataSource5.DataSet.FieldByName('order_plan').asInteger;
+      Form3.selectedPlan:= selectedPlan;
+
+    // 2 - найти по ключу
+
+
+    with Form3.Treeview1 do
+    begin
+    Select(Items.GetFirstNode);
+    for i := 0 to Items.Count - 1 do
+    begin
+
+   // Сначала нам надо проверить все планы
+      Select(Items[i]);
+      MyNode2:= Selected.Data;
+
+          if MyNode2.Plan=selectedPlan then
+          begin
+
+             getOptions4Plan(selectedPlan); // Пробуем подгрузить опции для плана
+
+          // Надо заполнить поля плана
+             Form3.OptionDesc.Text:=  Form3.UDS_plans.DataSet.FieldByName('description').AsString; // заполняем Дескрипшн плана
+             Form3.PlanPrice.Text:= Form3.UDS_plans.DataSet.FieldByName('cost').AsString; // выключаем поле стоимости заказа
+             Form3.btnEditPlanPrice.Enabled:= false; // выключаем кнопку сохранения стоимости заказа так как предыдущая строчка ее включит
+             Form3.addOrderTypeButton.Enabled:=False;
+             Form3.btnEditOrderType.Enabled:=False;
+
+             SetFocus;
+             Exit;
+          end;
+
+  end;
+
+    //--------------------------------------
+    // Не нашли планы. Ищем Подтипы
+
+    // И надо опции занулить
+
+        Form3.OptionsExists:=false;
+        Form3.OptionsList.Enabled:= false; // выключаем список опций
+        Form3.OptionDesc.Enabled:= false; // выключаем описание плана
+        Form3.PlanPrice.Enabled:= false; // выключаем поле стоимости заказа
+        Form3.btnEditPlanPrice.Enabled:= false; // выключаем кнопку сохранения стоимости заказа или описания
+        Form3.btnAddPlanOption.Enabled:= false; // выключаем кнопку добавления новой опции
+        Form3.btnDeletePlanOption.Enabled:= false; // выключаем кнопку удаления опции
+        Form3.btnEditPlanOption.Enabled:= false; // выключаем кнопку редактирования опции
+
+        Form3.OptionsList.Items.Add('Нет опций у плана или не выбран план'); // Добавляем строку в компонент ListBox
+
+
+     Select(Items.GetFirstNode);
+    for i := 0 to Items.Count - 1 do
+    begin
+
+         Select(Items[i]);
+         MyNode2:= Selected.Data;
+
+
+          if  MyNode2.orderSubType=selectedSubType then
+          begin
+            SetFocus;
+            Exit;
+          end;
+     end;
+
+   //--------------------------------------
+  // Не нашли подтипы. Ищем Типы
+     Select(Items.GetFirstNode);
+    for i := 0 to Items.Count - 1 do
+    begin
+
+         Select(Items[i]);
+         MyNode2:= Selected.Data;
+
+          if  MyNode2.orderType=selectedType then
+          begin
+            SetFocus;
+            Exit;
+          end;
+    end;
+
+  //нет заданного типа работ
+  MessageDlg('У данного заказа нет ни типа, ни подтипа, ни плана. Выберете что-нибудь!', mtWarning, [mbOk], 0);
+  Select(Items[0]);
+  SetFocus;
+
+end;
+
+
+
+
+
+
+end;
+
+procedure TForm1.noOptions;
+begin
+  Form3.OptionsExists:=false;
+  Form3.OptionsList.Enabled:= false; // выключаем список опций
+  Form3.OptionDesc.Enabled:= false; // выключаем описание плана
+  Form3.PlanPrice.Enabled:= false; // выключаем поле стоимости заказа
+  Form3.btnEditPlanPrice.Enabled:= false; // выключаем кнопку сохранения стоимости заказа или описания
+  Form3.btnAddPlanOption.Enabled:= false; // выключаем кнопку добавления новой опции
+  Form3.btnDeletePlanOption.Enabled:= false; // выключаем кнопку удаления опции
+  Form3.btnEditPlanOption.Enabled:= false; // выключаем кнопку редактирования опции
+
+  Form3.OptionsList.Items.Add('Нет опций у плана или не выбран план'); // Добавляем строку в компонент ListBox
+end;
+
 procedure TForm1.OrderTabShow(Sender: TObject);
 begin
 
@@ -2511,6 +2721,14 @@ begin
     UniDataSource8.DataSet.Next;
 
   end;
+
+end;
+
+procedure TForm1.clearOptionList;
+begin
+  Form3.OptionsList.Enabled:= false; // выключаем список опций
+  Form3.OptionsExists:=false;
+  Form3.OptionsList.Items.Clear;
 
 end;
 
@@ -3305,6 +3523,56 @@ begin
 
   end;
 
+end;
+
+procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+case Key of
+  VK_LEFT :
+  begin
+         ShowMessage('ХУЙ');
+  end;
+end;
+end;
+
+procedure TForm1.getOptions4Plan(plan: Integer);
+var
+x: Integer;
+
+begin
+// Для начала очистка и обнуление всего
+
+Form1.clearOptionList();
+
+
+// Проверяем есть ли у плана опции, если есть, то проставляем...
+
+
+Form3.orderOptions_UQ.Connection := Form1.UniConnection1;
+Form3.orderOptions_UQ.SQL.Text := 'SELECT * FROM options WHERE plan_id = :planid;';
+Form3.orderOptions_UQ.ParamByName('planid').AsInteger := plan;
+Form3.orderOptions_UQ.Execute;
+// Проверяем количество
+if (Form3.orderTypes_UQ.RecordCount<1) then
+begin
+ Form1.noOptions();
+end
+else
+begin   // опции есть
+  Form3.OptionsExists:=true;
+  Form3.OptionsList.Enabled:= true;
+  Form3.OptionDesc.Enabled:= true; // включаем описание плана
+  Form3.PlanPrice.Enabled:= true; // включаем поле стоимости заказа
+  Form3.btnAddPlanOption.Enabled:= true; // включаем кнопку добавления новой опции
+  Form3.orderOptions_UQ.First;
+  for x := 0 to Form3.orderOptions_UQ.RecordCount-1 do   // Заполняем
+  begin
+//    Form3.OptionsList.Items.Add(Form3.UDS_options.DataSet.FieldByName('optionname').AsString);
+    Form3.OptionsList.Items.AddObject(Form3.UDS_options.DataSet.FieldByName('optionname').AsString,TObject(Form3.UDS_options.DataSet.FieldByName('id').AsInteger));
+    Form3.orderOptions_UQ.Next;
+  end;
+end;
 end;
 
 procedure TForm1.StringGrid3DrawCell(Sender: TObject; ACol, ARow: Integer;
