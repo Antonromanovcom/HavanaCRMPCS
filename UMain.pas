@@ -312,6 +312,7 @@ var
   JobsDictionary: TDictionary<Integer, Integer>;
   statusDictionary: TDictionary<Integer, Integer>;
 
+
 implementation
 
 uses
@@ -3982,8 +3983,7 @@ begin
   begin
 
     UniQuery5.SQL.Text := 'DELETE FROM orders WHERE orders.id = :deletedid';
-    UniQuery5.ParamByName('deletedid').value :=
-      UniDataSource5.DataSet.FieldByName('id').AsInteger;
+    UniQuery5.ParamByName('deletedid').value := UniDataSource5.DataSet.FieldByName('id').AsInteger;
     UniQuery5.Execute;
 
     ShowMessage('Заказ удален!');
