@@ -32,7 +32,8 @@ uses
   dxSkinTheAsphaltWorld, dxSkinsDefaultPainters, dxSkinValentine,
   dxSkinVisualStudio2013Blue, dxSkinVisualStudio2013Dark,
   dxSkinVisualStudio2013Light, dxSkinVS2010, dxSkinWhiteprint,
-  dxSkinXmas2008Blue, cxInplaceContainer, unit3;
+  dxSkinXmas2008Blue, cxInplaceContainer, unit3, ThumbnailList, Vcl.ImgList,
+  dxGDIPlusClasses, Math, Statuses;
 
 type
 
@@ -159,6 +160,17 @@ type
     orderType: TEdit;
     OrderSubType: TEdit;
     OrderPlan: TEdit;
+    SalesFunnel: TTabSheet;
+    fnlContactList: TListBox;
+    funnelImage1: TImage;
+    InterestListBox: TListBox;
+    SoldListBox: TListBox;
+    DoneListBox: TListBox;
+    camImage: TImage;
+    interestImage: TImage;
+    calImage: TImage;
+    UniStoredProc1: TUniStoredProc;
+    btnStatuses: TButton;
 
     procedure Activate();
     procedure FormActivate(Sender: TObject);
@@ -196,7 +208,29 @@ type
     procedure TabSheet3Show(Sender: TObject);
     procedure Button13Click(Sender: TObject);
     procedure DeleteItem(Node: TTreeNode);
+    procedure fnlContactListDrawItem(Control: TWinControl; Index: Integer;
+      Rect: TRect; State: TOwnerDrawState);
+    procedure InterestListBoxDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure InterestListBoxDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure SalesFunnelShow(Sender: TObject);
+    procedure InterestListBoxDrawItem(Control: TWinControl; Index: Integer;
+      Rect: TRect; State: TOwnerDrawState);
+    procedure SoldListBoxDrawItem(Control: TWinControl; Index: Integer;
+      Rect: TRect; State: TOwnerDrawState);
+    procedure DoneListBoxDrawItem(Control: TWinControl; Index: Integer;
+      Rect: TRect; State: TOwnerDrawState);
+    procedure fnlContactListDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure fnlContactListDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure SoldListBoxDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure DoneListBoxDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure SoldListBoxDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure DoneListBoxDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure btnStatusesClick(Sender: TObject);
 
 
   private
@@ -210,6 +244,7 @@ type
     procedure EnableOnOrdButtons();
     procedure FirstOrder();
     procedure FirstClient();
+    procedure PaintFunnelImage(List1 :TListBox; Control: TWinControl; Index: Integer; Rect: TRect; listType: Integer);
 
 
   public
@@ -226,17 +261,37 @@ type
     function findJobByID(a: Integer): Integer;
     function findIDByJob(b: Integer): Integer;
     function findStatusByID(b: Integer): Integer;
+    function findIDByStatus(a: Integer): Integer;
+
     function findOrderTupeByID(i: Integer): String;
     function findOrderSubTypeByID(i: Integer): String;
     function findOrderPlanByID(i: Integer): String;
+
     procedure getOptions4Plan(plan: Integer);
     procedure noOptions();
     procedure clearOptionList();
     procedure loadOrderTypeTree();
+    procedure ChangeLocalTypes();
+    procedure ForcedChangeLocalTypes(typ:Integer; subtype:Integer; plan:Integer);
+    procedure ChangeStatus(newStatus:Integer; orderID:Integer);
+    procedure ToTheRight();
+    procedure ToTheLeft();
+    procedure ToTheEnd();
+    procedure ToTheFirst();
+    function GetOrderStatusByCode(Code:Integer): Integer;
 
+const
+  INTEREST_STATUS=1;
+  CONTACT_STATUS=2;
+  SOLD_STATUS=3;
+  DONE_STATUS=4;
 
   var
     root: TTreeNode;
+    currentMode: Integer; // 0 - стандарт, 1 - добавление заказа, 2 - добавление клиента
+    tempOrderType4AddEdit: Integer; // Временное хранилище для выбранного типа заказа при добавлении или рдактировании
+    tempOrderSubType4AddEdit: Integer; // Временное хранилище для выбранного ПОД-типа заказа при добавлении или рдактировании
+    tempOrderPlan4AddEdit: Integer; // Временное хранилище для выбранного Плана заказа при добавлении или рдактировании
 // currentTab: Integer;
   end;
 type
@@ -529,10 +584,7 @@ begin
   Button1.Enabled := true;
   LastButton.Enabled := true;
 
-  // OrderTab.TabVisible  := true;
-  // SenderTab.TabVisible  := true;
-  // ReportTab.TabVisible  := true;
-  // UserTab.TabVisible  := true;
+ 
 
 end;
 
@@ -558,6 +610,34 @@ begin
   begin
     findIDByJob := -1; // не нашли значение
   end;
+end;
+
+
+function TForm1.findIDByStatus(a: Integer): Integer;
+var
+  key: Integer;
+begin
+
+
+if statusDictionary.ContainsValue(a) then
+  begin
+
+    for key in statusDictionary.Keys do
+    begin
+      if (statusDictionary[key] = a) then
+      begin
+        findIDByStatus := key;
+        Break;
+      end;
+
+    end;
+  end
+  else
+  begin
+    findIDByStatus := -1; // не нашли значение
+  end;
+
+
 end;
 
 function TForm1.findJobByID(a: Integer): Integer;
@@ -709,28 +789,436 @@ end;
 
 procedure TForm1.TabSheet1Show(Sender: TObject);
 begin
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
 
-  FirstClient();
+
 
   // EnableOffAllButtons();
 
-  // EnableOnOrdButtons();
+   EnableOnOrdButtons();
+     FirstClient();
 
 end;
 
 procedure TForm1.TabSheet2Show(Sender: TObject);
 begin
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
   EnableOnOrdButtons();
 end;
 
 procedure TForm1.TabSheet3Show(Sender: TObject);
 begin
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
   EnableOffAllButtons();
+end;
+
+procedure TForm1.ToTheEnd;
+
+var
+Idx: Integer;
+y: Integer;
+
+value: Integer;
+ListIndex: Integer;
+CustomerID: Integer;
+localOrderType, localOrderSubType, localOrderPlan: String;
+
+
+begin
+
+currentMode:= 0;
+	StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
+	if (MainTab.TabIndex = 2) then
+	begin
+
+		UniDataSource5.DataSet.Last;
+		OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+		OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+
+		// Меняем статус
+		orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+		ListIndex := 0;
+		CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
+		ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
+
+		if (ListIndex = -1) then
+		Customer.Text := ''
+		else
+		Customer.ItemIndex := ListIndex;
+		Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
+
+		// Получаем тип заказа
+		localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+		localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+		localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+		// Обрезаем строки
+		if (Length(localOrderSubType)>22) then
+		begin
+			Delete(localOrderSubType, 22, Length(localOrderSubType));
+			localOrderSubType:=localOrderSubType+'...';
+		end;
+
+		Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+		orderType.Text:=localOrderType;
+		OrderSubType.Text:=localOrderSubType;
+		OrderPlan.Text:=localOrderPlan;
+
+
+		// Меняем текст кнопки
+		if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+		begin
+			Button13.Caption:='Добавить Тип Заказа';
+		end
+		else
+		begin
+			Button13.Caption:='Изменить Тип Заказа';
+		end;
+
+		if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = ''
+		then
+		RecieveDate.Date := Date
+		else
+		RecieveDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
+		if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
+		OrderDate.Date := Date
+		else
+		OrderDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
+		Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
+		Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
+		StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +
+		inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
+
+	end
+	else
+	begin
+
+		UniDataSource1.DataSet.Last;
+		StatusBar1.Panels[0].Text := 'Клинтов всего | Текущий: ' +
+		inttostr(clientsRecCount) + ' | ' +
+		inttostr(UniDataSource1.DataSet.RecNo);
+
+		eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
+		ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
+		eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
+
+		if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
+		TestDate.Date := Date
+		else
+		TestDate.Date := StrToDateTime (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
+		ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
+	end;
+end;
+
+procedure TForm1.ToTheFirst;
+var
+result: string;
+LCount: Integer;
+ListIndex: Integer;
+CustomerID: Integer;
+localOrderType, localOrderSubType, localOrderPlan: String;
+
+begin
+
+currentMode:= 0;
+	StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
+	if (MainTab.TabIndex = 2) then
+	begin
+
+		UniDataSource5.DataSet.First;
+		OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+		OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+
+		// Меняем статус
+		orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
+
+		ListIndex := 0;
+		CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
+		ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
+
+		if (ListIndex = -1) then
+		Customer.Text := ''
+		else
+		Customer.ItemIndex := ListIndex;
+		Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
+
+		// Получаем тип заказа
+		localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+		localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+		localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+		// Обрезаем строки
+		if (Length(localOrderSubType)>22) then
+		begin
+			Delete(localOrderSubType, 22, Length(localOrderSubType));
+			localOrderSubType:=localOrderSubType+'...';
+		end;
+
+		Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+		orderType.Text:=localOrderType;
+		OrderSubType.Text:=localOrderSubType;
+		OrderPlan.Text:=localOrderPlan;
+
+
+		// Меняем текст кнопки
+		if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+		begin
+			Button13.Caption:='Добавить Тип Заказа';
+		end
+		else
+		begin
+			Button13.Caption:='Изменить Тип Заказа';
+		end;
+
+		if (UniDataSource5.DataSet.FieldByName('client').AsString) = '' then
+		RecieveDate.Date := Date
+		else
+		RecieveDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
+
+		if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
+		OrderDate.Date := Date
+		else
+		OrderDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
+
+		StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +
+		inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
+
+	end
+	else
+	begin
+
+		UniDataSource1.DataSet.First;
+
+		StatusBar1.Panels[0].Text := 'Клинтов всего | Текущий: ' +
+		inttostr(clientsRecCount) + ' | ' +
+		inttostr(UniDataSource1.DataSet.RecNo);
+
+		Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
+		Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
+
+		eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
+		ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
+		eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
+
+		if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
+		TestDate.Date := Date
+		else
+		TestDate.Date := StrToDateTime (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
+
+
+		ComboBox2.ItemIndex :=(UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
+	end;
+end;
+
+procedure TForm1.ToTheLeft;
+var
+Idx: Integer;
+y: Integer;
+value: Integer;
+ListIndex: Integer;
+CustomerID: Integer;
+localOrderType, localOrderSubType, localOrderPlan: String;
+
+begin
+
+	currentMode:= 0;
+	StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
+	if (MainTab.TabIndex = 2) then
+	begin
+
+		UniDataSource5.DataSet.Prior;
+		OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+		OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+
+		// Меняем статус
+		orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
+
+		ListIndex := 0;
+		CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
+		ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
+
+		if (ListIndex = -1) then
+		Customer.Text := ''
+		else
+		Customer.ItemIndex := ListIndex;
+		Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+
+		// Получаем тип заказа
+		localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+		localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+		localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+
+		// Обрезаем строки
+		if (Length(localOrderSubType)>22) then
+		begin
+			Delete(localOrderSubType, 22, Length(localOrderSubType));
+			localOrderSubType:=localOrderSubType+'...';
+		end;
+
+		orderType.Text:=localOrderType;
+		OrderSubType.Text:=localOrderSubType;
+		OrderPlan.Text:=localOrderPlan;
+
+
+		// Меняем текст кнопки
+		if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+		begin
+			Button13.Caption:='Добавить Тип Заказа';
+		end
+		else
+		begin
+			Button13.Caption:='Изменить Тип Заказа';
+		end;
+
+		Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
+
+		if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = ''
+		then
+		RecieveDate.Date := Date
+		else
+		RecieveDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
+
+		if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
+		OrderDate.Date := Date
+		else
+		OrderDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
+		StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +  inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
+
+	end
+	else
+	begin
+
+		UniDataSource1.DataSet.Prior;
+
+		StatusBar1.Panels[0].Text := 'Клинтов всего | Текущий: ' +
+		inttostr(clientsRecCount) + ' | ' +
+		inttostr(UniDataSource1.DataSet.RecNo);
+
+		eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
+		ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
+		eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
+
+
+		if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
+		TestDate.Date := Date
+		else
+		TestDate.Date := StrToDateTime(UniDataSource1.DataSet.FieldByName('Birthday').AsString);
+		ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
+
+	end;
+end;
+
+procedure TForm1.ToTheRight;
+var
+Idx: Integer;
+y: Integer;
+
+value: Integer;
+ListIndex: Integer;
+CustomerID: Integer;
+localOrderType, localOrderSubType, localOrderPlan: String;
+
+begin
+
+currentMode:= 0;
+	StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
+    if (MainTab.TabIndex = 2) then
+	begin
+
+        UniDataSource5.DataSet.Next;
+        OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+        OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+
+        // Меняем статус
+        orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
+        ListIndex := 0;
+        CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
+        ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
+
+		if (ListIndex = -1) then
+		Customer.Text := ''
+		else
+		Customer.ItemIndex := ListIndex;
+
+
+		ChangeLocalTypes();
+
+		// Меняем текст кнопки
+		if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+		begin
+			Button13.Caption:='Добавить Тип Заказа';
+		end
+		else
+		begin
+			Button13.Caption:='Изменить Тип Заказа';
+		end;
+
+		Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
+
+		if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = ''
+		then
+		RecieveDate.Date := Date
+		else
+		RecieveDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
+
+		if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
+		OrderDate.Date := Date
+		else
+		OrderDate.Date := StrToDateTime
+        (UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
+
+		StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +
+		inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
+
+	end
+	else
+	begin
+
+		UniDataSource1.DataSet.Next;
+
+		Edit1.Text := inttostr(UniDataSource1.DataSet.RecNo);
+		Edit2.Text := inttostr(UniDataSource1.DataSet.RecordCount);
+
+		StatusBar1.Panels[0].Text := 'Клинтов всего | Текущий: ' +
+		inttostr(clientsRecCount) + ' | ' +
+		inttostr(UniDataSource1.DataSet.RecNo);
+
+		eName.Text := UniDataSource1.DataSet.FieldByName('name').AsString;
+		ePhone.Text := UniDataSource1.DataSet.FieldByName('phone').AsString;
+		eEmail.Text := UniDataSource1.DataSet.FieldByName('email').AsString;
+
+		if (UniDataSource1.DataSet.FieldByName('birthday').AsString) = '' then
+		TestDate.Date := Date
+		else
+		TestDate.Date := StrToDateTime
+        (UniDataSource1.DataSet.FieldByName('birthday').AsString);
+
+		ComboBox2.ItemIndex :=
+		(UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
+
+		Idx := ComboBox1.ItemIndex;
+		value := Integer(ComboBox1.Items.Objects[Idx]);
+
+	end;
 end;
 
 procedure TForm1.UserTabShow(Sender: TObject);
 begin
-
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
 
   // SELECT * FROM `Users` WHERE ID = 2
 
@@ -1270,6 +1758,11 @@ var
 
 begin
 
+// Ставим стандартный режим
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
+
   UniQuery2.ExecSQL;
   UniQuery3.ExecSQL;
 
@@ -1287,7 +1780,8 @@ begin
     sItem := UniDataSource2.DataSet.FieldByName('status').AsString;
     sItemHelp := Format(sItem, [j]);
     statusDictionary.Add(j, UniDataSource2.DataSet.FieldByName('id').AsInteger);
-    // Кладем в мапу j и айдишник из базы чтобы потом их соотносить для поиска статусов.
+
+   // Кладем в мапу j и айдишник из базы чтобы потом их соотносить для поиска статусов.
     UniDataSource2.DataSet.Next;
     ComboBox1.Items.AddObject(sItem, TObject(j));
   end;
@@ -1431,6 +1925,11 @@ end;
 procedure TForm1.Activate;
 begin
   // act();
+end;
+
+procedure TForm1.btnStatusesClick(Sender: TObject);
+begin
+StatusesForm.Show;
 end;
 
 procedure TForm1.Button10Click(Sender: TObject);
@@ -1635,6 +2134,72 @@ begin
 end;
 end;
 
+procedure TForm1.DoneListBoxDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+selectedOrderID:Integer;
+
+begin
+
+if Source = InterestListBox then
+begin
+  DoneListBox.Items.Add(InterestListBox.Items[InterestListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(InterestListBox.Items.Objects[InterestListBox.ItemIndex]);
+  fnlContactList.Items.Delete(InterestListBox.ItemIndex);// Удаляем
+
+end
+else if (Source = fnlContactList) then
+begin
+  DoneListBox.Items.Add(fnlContactList.Items[fnlContactList.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(fnlContactList.Items.Objects[fnlContactList.ItemIndex]);
+  SoldListBox.Items.Delete(fnlContactList.ItemIndex);// Удаляем
+
+end
+else if (Source = SoldListBox) then
+begin
+  DoneListBox.Items.Add(SoldListBox.Items[SoldListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(SoldListBox.Items.Objects[SoldListBox.ItemIndex]);
+  SoldListBox.Items.Delete(SoldListBox.ItemIndex);// Удаляем
+
+end;
+
+
+DoneListBox.Repaint;
+DoneListBox.Refresh;
+
+// -------------- Изменение статуса в БД ------------------
+
+Form1.ChangeStatus(DONE_STATUS, selectedOrderID);
+
+// ---------------------------------------------------
+
+
+
+end;
+
+procedure TForm1.DoneListBoxDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+begin
+      Accept := (Source = InterestListBox) or (Source = fnlContactList) or (Source = SoldListBox);
+end;
+
+procedure TForm1.DoneListBoxDrawItem(Control: TWinControl; Index: Integer; Rect: TRect; State: TOwnerDrawState);
+begin
+with (Control as TListBox).Canvas do
+  begin
+     FillRect(Rect); { очищаем прямоугольник }
+     Brush.Color := RGB(38, 153, 38);
+     FillRect(Rect);
+     Pen.Color := clGray;
+     Pen.Width := 2;
+     Brush.Style := bsSolid;
+     MoveTo(Rect.Left,Rect.Bottom);
+     LineTo(Rect.Right,Rect.Bottom);
+end;
+
+PaintFunnelImage(DoneListBox, Control, Index, Rect, 4);
+
+end;
+
 procedure TForm1.Button13Click(Sender: TObject);
 var
     MyNode2: TFruit;
@@ -1796,16 +2361,18 @@ end;
 
 procedure TForm1.Button1Click(Sender: TObject);
 
-var
+{var
   Idx: Integer;
   y: Integer;
 
   value: Integer;
   ListIndex: Integer;
   CustomerID: Integer;
-  localOrderType, localOrderSubType, localOrderPlan: String;
+  localOrderType, localOrderSubType, localOrderPlan: String; }
 
 begin
+ { currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
 
     if (MainTab.TabIndex = 2) then
       begin
@@ -1813,7 +2380,9 @@ begin
         UniDataSource5.DataSet.Next;
         OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
         OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
-        orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
+        // Меняем статус
+        orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
 
         ListIndex := 0;
         CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
@@ -1824,24 +2393,8 @@ begin
     else
       Customer.ItemIndex := ListIndex;
 
-    // Получаем тип заказа
-    // Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
-    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
-    localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
-    localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
 
-    // Обрезаем строки
-    if (Length(localOrderSubType)>22) then
-    begin
-      Delete(localOrderSubType, 22, Length(localOrderSubType));
-      localOrderSubType:=localOrderSubType+'...';
-    end;
-
-    Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
-    orderType.Text:=localOrderType;
-    OrderSubType.Text:=localOrderSubType;
-    OrderPlan.Text:=localOrderPlan;
-
+     ChangeLocalTypes();
 
     // Меняем текст кнопки
     if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
@@ -1852,9 +2405,6 @@ begin
     begin
          Button13.Caption:='Изменить Тип Заказа';
     end;
-
-
-
 
     Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
 
@@ -1884,7 +2434,7 @@ begin
       else
       birthdayunknowChkBx.Checked := FALSE; }
 
-    Edit1.Text := inttostr(UniDataSource1.DataSet.RecNo);
+  {  Edit1.Text := inttostr(UniDataSource1.DataSet.RecNo);
     Edit2.Text := inttostr(UniDataSource1.DataSet.RecordCount);
 
     StatusBar1.Panels[0].Text := 'Клинтов всего | Текущий: ' +
@@ -1909,26 +2459,36 @@ begin
     Idx := ComboBox1.ItemIndex;
     value := Integer(ComboBox1.Items.Objects[Idx]);
 
-  end;
+  end;     }
+
+Form1.ToTheRight();
+
 end;
 
 procedure TForm1.Button2Click(Sender: TObject);
-var
+{var
   Idx: Integer;
   y: Integer;
   value: Integer;
   ListIndex: Integer;
   CustomerID: Integer;
   localOrderType, localOrderSubType, localOrderPlan: String;
+  }
 
 begin
+ { currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
   if (MainTab.TabIndex = 2) then
   begin
 
     UniDataSource5.DataSet.Prior;
     OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
     OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
+  // Меняем статус
+    orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
 
     ListIndex := 0;
     CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
@@ -1960,14 +2520,10 @@ begin
     OrderPlan.Text:=localOrderPlan;
 
 
-
-
-
-
     // Меняем текст кнопки
     if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
     begin
-    Button13.Caption:='Добавить Тип Заказа';
+         Button13.Caption:='Добавить Тип Заказа';
     end
     else
     begin
@@ -1982,16 +2538,14 @@ begin
     then
       RecieveDate.Date := Date
     else
-      RecieveDate.Date :=
-        StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
+      RecieveDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
 
     if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
       OrderDate.Date := Date
     else
       OrderDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
 
-    StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +
-      inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
+    StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +  inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
 
   end
   else
@@ -2011,21 +2565,21 @@ begin
     if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
       TestDate.Date := Date
     else
-      TestDate.Date := StrToDateTime
-        (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
+      TestDate.Date := StrToDateTime(UniDataSource1.DataSet.FieldByName('Birthday').AsString);
 
 
-    ComboBox2.ItemIndex :=
-      (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
+    ComboBox2.ItemIndex := (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
 
-  end;
+  end;   }
+
+Form1.ToTheLeft();
 
 end;
 
 procedure TForm1.Button3Click(Sender: TObject);
 begin
 
-  if (MainTab.TabIndex = 2) then
+  if (MainTab.TabIndex = 2) then   // Заказ
   begin
     Button3.Enabled := FALSE;
     OrderName.Text := '';
@@ -2036,6 +2590,11 @@ begin
     OrderCost.Text := '';
     orderstatus.Text := '';
     SaveBtn.Visible := true;
+    StatusBar1.Panels[2].Text := 'Режим: ДОБАВЛЕНИЕ НОВОГО ЗАКАЗА';
+    currentMode:= 1;
+
+
+
 
   end
   else
@@ -2057,7 +2616,7 @@ end;
 
 procedure TForm1.LastButtonClick(Sender: TObject);
 
-var
+{var
   Idx: Integer;
   y: Integer;
 
@@ -2065,18 +2624,22 @@ var
   ListIndex: Integer;
   CustomerID: Integer;
   localOrderType, localOrderSubType, localOrderPlan: String;
+  }
 
 begin
+{  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
 
   if (MainTab.TabIndex = 2) then
   begin
 
     UniDataSource5.DataSet.Last;
-    OrderName.Text := UniDataSource5.DataSet.FieldByName
-      ('order_short_name').AsString;
+    OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
     OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status')
-      .AsInteger) - 1;
+
+  // Меняем статус
+    orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
 
     ListIndex := 0;
     CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
@@ -2151,7 +2714,7 @@ begin
       else
       birthdayunknowChkBx.Checked := FALSE;
     }
-
+ {
     StatusBar1.Panels[0].Text := 'Клинтов всего | Текущий: ' +
       inttostr(clientsRecCount) + ' | ' +
       inttostr(UniDataSource1.DataSet.RecNo);
@@ -2171,7 +2734,144 @@ begin
     ComboBox2.ItemIndex :=
       (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
 
-  end;
+  end; }
+
+Form1.ToTheEnd();
+
+end;
+
+procedure TForm1.InterestListBoxDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+selectedOrderID:Integer;
+
+begin
+if Source = fnlContactList then
+begin
+  InterestListBox.Items.Add(fnlContactList.Items[fnlContactList.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(fnlContactList.Items.Objects[fnlContactList.ItemIndex]);
+  fnlContactList.Items.Delete(fnlContactList.ItemIndex);// Удаляем
+
+end
+else if (Source = SoldListBox) then
+begin
+  InterestListBox.Items.Add(SoldListBox.Items[SoldListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(SoldListBox.Items.Objects[SoldListBox.ItemIndex]);
+  SoldListBox.Items.Delete(SoldListBox.ItemIndex);// Удаляем
+
+end
+else if (Source = DoneListBox) then
+begin
+  InterestListBox.Items.Add(DoneListBox.Items[DoneListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(DoneListBox.Items.Objects[DoneListBox.ItemIndex]);
+  DoneListBox.Items.Delete(DoneListBox.ItemIndex);// Удаляем
+
+end;
+
+
+InterestListBox.Repaint;
+InterestListBox.Refresh;
+
+// -------------- Изменение статуса в БД ------------------
+
+Form1.ChangeStatus(CONTACT_STATUS, selectedOrderID);
+
+// ---------------------------------------------------
+
+
+end;
+
+procedure TForm1.InterestListBoxDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+begin
+
+       Accept := (Source = fnlContactList) or (Source = SoldListBox) or (Source = DoneListBox);
+
+end;
+
+procedure TForm1.InterestListBoxDrawItem(Control: TWinControl; Index: Integer; Rect: TRect; State: TOwnerDrawState);
+begin
+
+with (Control as TListBox).Canvas do
+  begin
+     FillRect(Rect); { очищаем прямоугольник }
+     Brush.Color := RGB(255, 255, 115);
+     FillRect(Rect);
+     Pen.Color := clGray;
+     Pen.Width := 2;
+     Brush.Style := bsSolid;
+     MoveTo(Rect.Left,Rect.Bottom);
+     LineTo(Rect.Right,Rect.Bottom);
+end;
+
+PaintFunnelImage(InterestListBox, Control, Index, Rect, 2);
+
+
+end;
+
+procedure TForm1.fnlContactListDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+selectedOrderID:Integer;
+begin
+if Source = InterestListBox then
+begin
+  fnlContactList.Items.Add(InterestListBox.Items[InterestListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(InterestListBox.Items.Objects[InterestListBox.ItemIndex]);
+  InterestListBox.Items.Delete(InterestListBox.ItemIndex);// Удаляем
+
+end
+else if (Source = SoldListBox) then
+begin
+  fnlContactList.Items.Add(SoldListBox.Items[SoldListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(SoldListBox.Items.Objects[SoldListBox.ItemIndex]);
+  SoldListBox.Items.Delete(SoldListBox.ItemIndex);// Удаляем
+
+end
+else if (Source = DoneListBox) then
+begin
+  fnlContactList.Items.Add(DoneListBox.Items[DoneListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(DoneListBox.Items.Objects[DoneListBox.ItemIndex]);
+  DoneListBox.Items.Delete(DoneListBox.ItemIndex);// Удаляем
+
+end;
+
+
+fnlContactList.Repaint;
+fnlContactList.Refresh;
+
+
+// -------------- Изменение статуса в БД ------------------
+
+Form1.ChangeStatus(INTEREST_STATUS, selectedOrderID);
+
+// ---------------------------------------------------
+
+end;
+
+procedure TForm1.fnlContactListDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+begin
+      Accept := (Source = InterestListBox) or (Source = SoldListBox) or (Source = DoneListBox);
+end;
+
+procedure TForm1.fnlContactListDrawItem(Control: TWinControl; Index: Integer; Rect: TRect; State: TOwnerDrawState);
+  begin
+
+  with (Control as TListBox).Canvas do
+  begin
+     FillRect(Rect); { очищаем прямоугольник }
+     Brush.Color := RGB(97, 180, 207);
+     FillRect(Rect);
+     Pen.Color := clGray;
+     Pen.Width := 2;
+     Brush.Style := bsSolid;
+     MoveTo(Rect.Left,Rect.Bottom);
+     LineTo(Rect.Right,Rect.Bottom);
+end;
+
+PaintFunnelImage(fnlContactList, Control, Index, Rect, 1);
+
+
+
 end;
 
 // Загрузка дерева типа заказов. На данном этапе пока это дубль процедуры у кнопки редактирования типа заказа
@@ -2357,6 +3057,13 @@ end;
 
 procedure TForm1.OrderTabShow(Sender: TObject);
 begin
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
+    tempOrderType4AddEdit:=0;
+    tempOrderSubType4AddEdit:=0;
+    tempOrderPlan4AddEdit:=0;
+
 
   FirstOrder();
   EnableOnOrdButtons();
@@ -2371,6 +3078,8 @@ var
   allLeads, successLeads, injobLeads, refusedLeads: Integer;
 
 begin
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
 
   ReportsYearclientsStat();
   ReportsMonthclientsStat();
@@ -2380,24 +3089,28 @@ begin
 end;
 
 procedure TForm1.Button4Click(Sender: TObject);
-var
+{var
   result: string;
   LCount: Integer;
   ListIndex: Integer;
   CustomerID: Integer;
   localOrderType, localOrderSubType, localOrderPlan: String;
+  }
 
 begin
+{  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
 
   if (MainTab.TabIndex = 2) then
   begin
 
     UniDataSource5.DataSet.First;
-    OrderName.Text := UniDataSource5.DataSet.FieldByName
-      ('order_short_name').AsString;
+    OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
     OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
-    orderstatus.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_status')
-      .AsInteger) - 1;
+
+   // Меняем статус
+    orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
 
     ListIndex := 0;
     CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
@@ -2472,7 +3185,7 @@ begin
       birthdayunknowChkBx.Checked := true
       else
       birthdayunknowChkBx.Checked := FALSE; }
-
+   {
     Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
     Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
 
@@ -2490,7 +3203,8 @@ begin
     // ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status').AsInteger) - 1;
     ComboBox2.ItemIndex :=
       (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
-  end;
+  end; }
+  Form1.ToTheFirst();
 end;
 
 procedure TForm1.Button5Click(Sender: TObject);
@@ -2588,6 +3302,9 @@ procedure TForm1.Button6Click(Sender: TObject);
 var
   clientsRecCountbefore: Integer;
 begin
+
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
 
   UniQuery1.Close;
   UniQuery1.SQL.Text := 'SELECT * FROM clients WHERE user_id = :userid;';
@@ -2724,6 +3441,53 @@ begin
 
 end;
 
+procedure TForm1.ChangeLocalTypes;
+var
+  localOrderType, localOrderSubType, localOrderPlan: String;
+begin
+
+    // Получаем тип заказа
+    // Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+    localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+    localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+    // Обрезаем строки
+    if (Length(localOrderSubType)>22) then
+    begin
+      Delete(localOrderSubType, 22, Length(localOrderSubType));
+      localOrderSubType:=localOrderSubType+'...';
+    end;
+
+    Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+    orderType.Text:=localOrderType;
+    OrderSubType.Text:=localOrderSubType;
+    OrderPlan.Text:=localOrderPlan;
+
+end;
+
+procedure TForm1.ChangeStatus(newStatus: Integer; orderID:Integer);
+Var
+  status: Integer;
+begin
+// -------------- Изменение статуса в БД ------------------
+
+
+
+
+UniQuery10.Close;
+Form1.UniQuery10.SQL.Text :='UPDATE orders SET order_status = :status  WHERE id=:id';
+Form1.UniQuery10.ParamByName('id').AsInteger := orderID;
+
+
+Form1.UniQuery10.ParamByName('status').AsInteger := GetOrderStatusByCode(newStatus);
+//Form1.UniQuery10.ParamByName('code').AsInteger := newStatus;
+Form1.UniQuery10.ExecSQL;
+
+// ---------------------------------------------------
+
+end;
+
 procedure TForm1.clearOptionList;
 begin
   Form3.OptionsList.Enabled:= false; // выключаем список опций
@@ -2751,6 +3515,99 @@ begin
 
 end;
 
+//Загрузить воронку и расставить ее элементы
+procedure TForm1.SalesFunnelShow(Sender: TObject);
+var
+curyear, reccount: Integer;
+
+begin
+EnableOffAllButtons();
+currentMode:= 0;
+StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
+UniQuery10.Close;
+UniQuery10.SQL.Text := 'select * FROM orders LEFT OUTER JOIN order_status ON orders.order_status = order_status.id WHERE date_part(' + #39 + 'year' + #39 + ', order_deadline) =:cy AND orders.user_id=:userid AND order_status.' + #34 + 'Code' + #34 + ' = 1';
+
+curyear := YearOf(Now());
+UniQuery10.ParamByName('userid').AsString := UserID;
+UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
+UniQuery10.ExecSQL;
+reccount := UniQuery10.RecordCount;
+
+// Почистим списки
+fnlContactList.Items.Clear;
+InterestListBox.Items.Clear;
+SoldListBox.Items.Clear;
+DoneListBox.Items.Clear;
+
+// - ИНТЕРЕС -
+UniDataSource8.DataSet.First;
+while (not UniDataSource8.DataSet.Eof) do
+  begin
+    fnlContactList.Items.AddObject(UniDataSource8.DataSet.FieldByName('order_short_name').AsString, TObject(UniDataSource8.DataSet.FieldByName('id').AsInteger));
+    UniDataSource8.DataSet.Next;
+  end;
+ UniQuery10.Close;
+
+// - КОНТАКТ -
+
+UniQuery10.SQL.Text := 'select * FROM orders LEFT OUTER JOIN order_status ON orders.order_status = order_status.id WHERE date_part(' + #39 + 'year' + #39 + ', order_deadline) =:cy AND orders.user_id=:userid AND order_status.' + #34 + 'Code' + #34 + ' = 2';
+
+curyear := YearOf(Now());
+UniQuery10.ParamByName('userid').AsString := UserID;
+UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
+UniQuery10.ExecSQL;
+
+
+UniDataSource8.DataSet.First;
+while (not UniDataSource8.DataSet.Eof) do
+  begin
+    InterestListBox.Items.AddObject(UniDataSource8.DataSet.FieldByName('order_short_name').AsString, TObject(UniDataSource8.DataSet.FieldByName('id').AsInteger));
+    UniDataSource8.DataSet.Next;
+  end;
+ UniQuery10.Close;
+
+ // - ПРОДАЖА -
+
+UniQuery10.SQL.Text := 'select * FROM orders LEFT OUTER JOIN order_status ON orders.order_status = order_status.id WHERE date_part(' + #39 + 'year' + #39 + ', order_deadline) =:cy AND orders.user_id=:userid AND order_status.' + #34 + 'Code' + #34 + ' = 3';
+curyear := YearOf(Now());
+UniQuery10.ParamByName('userid').AsString := UserID;
+UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
+UniQuery10.ExecSQL;
+
+
+
+ UniDataSource8.DataSet.First;
+while (not UniDataSource8.DataSet.Eof) do
+  begin
+    SoldListBox.Items.AddObject(UniDataSource8.DataSet.FieldByName('order_short_name').AsString, TObject(UniDataSource8.DataSet.FieldByName('id').AsInteger));
+    UniDataSource8.DataSet.Next;
+  end;
+ UniQuery10.Close;
+
+ // - ГОТОВО -
+
+UniQuery10.SQL.Text := 'select * FROM orders LEFT OUTER JOIN order_status ON orders.order_status = order_status.id WHERE date_part(' + #39 + 'year' + #39 + ', order_deadline) =:cy AND orders.user_id=:userid AND order_status.' + #34 + 'Code' + #34 + ' = 4';
+curyear := YearOf(Now());
+UniQuery10.ParamByName('userid').AsString := UserID;
+UniQuery10.ParamByName('cy').AsString := inttostr(curyear);
+UniQuery10.ExecSQL;
+
+
+
+ UniDataSource8.DataSet.First;
+while (not UniDataSource8.DataSet.Eof) do
+  begin
+    DoneListBox.Items.AddObject(UniDataSource8.DataSet.FieldByName('order_short_name').AsString, TObject(UniDataSource8.DataSet.FieldByName('id').AsInteger));
+    UniDataSource8.DataSet.Next;
+  end;
+ UniQuery10.Close;
+
+
+
+
+end;
+
 procedure TForm1.SaveBtnClick(Sender: TObject);
 
 var
@@ -2766,21 +3623,45 @@ begin
   begin
 
     UniQuery5.SQL.Text := 'INSERT INTO orders (order_short_name,' +
-      ' client, order_type, order_create_date, order_deadline, order_cost, order_status, user_id)'
-      + ' VALUES (:ordName, :ordCustomer, :ordJobsType, :ordDateRecieve, :ordDate,'
-      + ' :ordCost, :ordStatus, :userid)';
+      ' client, order_type, order_create_date, order_deadline, order_cost, order_status, user_id, order_sub_type, order_plan)'
+      + ' VALUES (:ordName, :ordCustomer, :ordJobsType, :ordDateRecieve, :ordDate, :ordCost, :ordStatus, :userid, :subtype, :plan)';
+
 
     UniQuery5.ParamByName('ordName').AsString := OrderName.Text;
-    UniQuery5.ParamByName('ordCustomer').AsInteger :=
-      CustomerArr[Customer.ItemIndex];
-    // UniQuery5.ParamByName('ordJobsType').AsInteger := Jobstype.ItemIndex + 1;
-    UniQuery5.ParamByName('ordJobsType').AsInteger :=
-      findJobByID(Jobstype.ItemIndex + 1);
+    UniQuery5.ParamByName('ordCustomer').AsInteger := CustomerArr[Customer.ItemIndex];
 
-    UniQuery5.ParamByName('ordDateRecieve').AsString :=
-      FormatDateTime('yyyy-mm-dd ', (RecieveDate.Date));
-    UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ',
-      (OrderDate.Date));
+    // Проверяем типы на ноль и если не ноль - пишем, если нет - зануляем параметр
+    if (tempOrderType4AddEdit<1) then
+    begin
+      UniQuery5.ParamByName('ordJobsType').Clear
+    end
+    else
+    begin
+      UniQuery5.ParamByName('ordJobsType').AsInteger := tempOrderType4AddEdit;   // Тип
+    end;
+
+   // Проверяем ПОДтипы на ноль и если не ноль - пишем, если нет - зануляем параметр
+    if (tempOrderType4AddEdit<1) then
+    begin
+      UniQuery5.ParamByName('subtype').Clear;
+    end
+    else
+    begin
+      UniQuery5.ParamByName('subtype').AsInteger := tempOrderSubType4AddEdit;   // Подтип
+    end;
+
+    // Проверяем План на ноль и если не ноль - пишем, если нет - зануляем параметр
+    if (tempOrderType4AddEdit<1) then
+    begin
+      UniQuery5.ParamByName('plan').Clear;
+    end
+    else
+    begin
+      UniQuery5.ParamByName('plan').AsInteger := tempOrderPlan4AddEdit;   // План
+    end;
+
+    UniQuery5.ParamByName('ordDateRecieve').AsString := FormatDateTime('yyyy-mm-dd ', (RecieveDate.Date));
+    UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ',  (OrderDate.Date));
 
     if not TryStrToInt(OrderCost.Text, tempCost) then
     // Проверяем число ввели или нет
@@ -2792,15 +3673,13 @@ begin
       UniQuery5.ParamByName('ordCost').AsInteger := tempCost;
     end;
 
-    // UniQuery5.ParamByName('ordCost').AsInteger := TryStrToInt(OrderCost.Text, i);
     if (orderstatus.ItemIndex = -1) then // Проверяем если ничего не выбрано
     begin
       UniQuery5.ParamByName('ordStatus').Clear;
     end
     else
     begin
-      UniQuery5.ParamByName('ordStatus').AsInteger :=
-        findStatusByID(orderstatus.ItemIndex + 1);
+      UniQuery5.ParamByName('ordStatus').AsInteger := findStatusByID(orderstatus.ItemIndex + 1);
     end;
     UniQuery5.ParamByName('userid').AsInteger := StrToInt(UserID);
 
@@ -2818,8 +3697,7 @@ begin
     else
       BirthdayUnknow := 0;
 
-    UniQuery5.SQL.Text :=
-      'INSERT INTO clients (Name, Phone, Email, whereclientfrom, Birthday, user_id, date_created) VALUES (:clName, :clPhone, :clEmail, :clFrom, :clBD, :userid, :orderdate)';
+    UniQuery5.SQL.Text := 'INSERT INTO clients (Name, Phone, Email, whereclientfrom, Birthday, user_id, date_created) VALUES (:clName, :clPhone, :clEmail, :clFrom, :clBD, :userid, :orderdate)';
 
     UniQuery5.ParamByName('clName').AsString := eName.Text;
     UniQuery5.ParamByName('clPhone').AsString := ePhone.Text;
@@ -2844,6 +3722,10 @@ begin
     Button3.Enabled := true;
 
   end;
+
+    currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
 end;
 
 procedure TForm1.SenderTabShow(Sender: TObject);
@@ -2854,6 +3736,10 @@ var
   { const
     LOCAL_PAGE ='C:/NP2/StartPage.htm'; }
 begin
+
+  currentMode:= 0;
+  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
   // WEB ABOUT
 
   FIsStartPage := true;
@@ -2869,6 +3755,74 @@ begin
 
   FIsStartPage := FALSE;
   EnableOffAllButtons();
+
+end;
+
+procedure TForm1.SoldListBoxDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+selectedOrderID:Integer;
+
+begin
+
+if Source = InterestListBox then
+begin
+  SoldListBox.Items.Add(InterestListBox.Items[InterestListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(InterestListBox.Items.Objects[InterestListBox.ItemIndex]);
+  fnlContactList.Items.Delete(InterestListBox.ItemIndex);// Удаляем
+
+end
+else if (Source = fnlContactList) then
+begin
+  SoldListBox.Items.Add(fnlContactList.Items[fnlContactList.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(fnlContactList.Items.Objects[fnlContactList.ItemIndex]);
+  fnlContactList.Items.Delete(fnlContactList.ItemIndex);// Удаляем
+
+end
+else if (Source = DoneListBox) then
+begin
+  SoldListBox.Items.Add(DoneListBox.Items[DoneListBox.ItemIndex]); // Добавляем строку в компонент ListBox
+  selectedOrderID := Integer(DoneListBox.Items.Objects[DoneListBox.ItemIndex]);
+  DoneListBox.Items.Delete(DoneListBox.ItemIndex);// Удаляем
+
+end;
+
+
+SoldListBox.Repaint;
+SoldListBox.Refresh;
+
+
+// -------------- Изменение статуса в БД ------------------
+
+Form1.ChangeStatus(SOLD_STATUS, selectedOrderID);
+
+// ---------------------------------------------------
+
+
+end;
+
+procedure TForm1.SoldListBoxDragOver(Sender, Source: TObject; X, Y: Integer;
+  State: TDragState; var Accept: Boolean);
+begin
+      Accept := (Source = InterestListBox) or (Source = fnlContactList) or (Source = DoneListBox);
+end;
+
+procedure TForm1.SoldListBoxDrawItem(Control: TWinControl; Index: Integer; Rect: TRect; State: TOwnerDrawState);
+begin
+
+with (Control as TListBox).Canvas do
+  begin
+     FillRect(Rect); { очищаем прямоугольник }
+     Brush.Color := RGB(255, 86, 84);
+     FillRect(Rect);
+     Pen.Color := clGray;
+     Pen.Width := 2;
+     Brush.Style := bsSolid;
+     MoveTo(Rect.Left,Rect.Bottom);
+     LineTo(Rect.Right,Rect.Bottom);
+end;
+
+PaintFunnelImage(SoldListBox, Control, Index, Rect, 3);
+
 
 end;
 
@@ -3062,23 +4016,17 @@ begin
 
     editBtn.Enabled := FALSE;
     UniQuery5.SQL.Text :=
-      'UPDATE orders SET order_short_name = :ordName, client = :ordCustomer, order_create_date = :ordRec, order_deadline = :ordDate, order_type = :ordJobType, order_cost = :ordCost, order_status = :ordStatus WHERE orders.id = :ordID';
+      'UPDATE orders SET order_short_name = :ordName, client = :ordCustomer, order_create_date = :ordRec, '
+    + ' order_deadline = :ordDate, order_cost = :ordCost, order_status = :ordStatus WHERE orders.id = :ordID';
 
     UniQuery5.ParamByName('ordName').AsString := OrderName.Text;
-    UniQuery5.ParamByName('ordCustomer').AsString :=
-      inttostr(CustomerArr[Customer.ItemIndex]);
-    UniQuery5.ParamByName('ordJobType').AsString :=
-      inttostr((Jobstype.ItemIndex) + 1);
+    UniQuery5.ParamByName('ordCustomer').AsString := inttostr(CustomerArr[Customer.ItemIndex]);
 
-    UniQuery5.ParamByName('ordRec').AsString := FormatDateTime('yyyy-mm-dd ',
-      (RecieveDate.Date));
-    UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ',
-      (OrderDate.Date));
+    UniQuery5.ParamByName('ordRec').AsString := FormatDateTime('yyyy-mm-dd ', (RecieveDate.Date));
+    UniQuery5.ParamByName('ordDate').AsString := FormatDateTime('yyyy-mm-dd ',(OrderDate.Date));
     UniQuery5.ParamByName('ordCost').AsString := OrderCost.Text;
-    UniQuery5.ParamByName('ordStatus').AsInteger :=
-      findStatusByID(orderstatus.ItemIndex + 1);
-    UniQuery5.ParamByName('ordID').AsString :=
-      UniDataSource5.DataSet.FieldByName('id').AsString;
+    UniQuery5.ParamByName('ordStatus').AsInteger := findStatusByID(orderstatus.ItemIndex + 1);
+    UniQuery5.ParamByName('ordID').AsString := UniDataSource5.DataSet.FieldByName('id').AsString;
 
     UniQuery5.Execute;
     editBtn.Enabled := true;
@@ -3258,6 +4206,56 @@ end;
 
   end;
 }
+procedure TForm1.ForcedChangeLocalTypes(typ, subtype, plan: Integer);
+var
+  localOrderType, localOrderSubType, localOrderPlan: String;
+begin
+
+    // Получаем тип заказа
+
+    if (typ>1) then
+    begin
+       localOrderType:=  findOrderTupeByID(typ); //Поле Тип
+    end
+    else
+    begin
+       localOrderType:=  '...'; //Поле Тип
+    end;
+
+    if (subtype>1) then
+    begin
+       localOrderSubType:=  findOrderSubTypeByID(subtype); //Поле ПОДТип
+    end
+    else
+    begin
+       localOrderSubType:=  '...'; //Поле Тип
+    end;
+
+    if (plan>1) then
+    begin
+       localOrderPlan:=  findOrderPlanByID(plan); //Поле План
+    end
+    else
+    begin
+       localOrderPlan:=  '...'; //Поле Тип
+    end;
+
+
+    // Обрезаем строки
+    if (Length(localOrderSubType)>22) then
+    begin
+      Delete(localOrderSubType, 22, Length(localOrderSubType));
+      localOrderSubType:=localOrderSubType+'...';
+    end;
+
+    orderType.Text:=localOrderType;
+    OrderSubType.Text:=localOrderSubType;
+    OrderPlan.Text:=localOrderPlan;
+
+
+
+end;
+
 procedure TForm1.FormActivate(Sender: TObject);
 
 { var
@@ -3528,12 +4526,47 @@ end;
 procedure TForm1.FormKeyDown(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
-case Key of
-  VK_LEFT :
-  begin
-         ShowMessage('ХУЙ');
-  end;
+
+if ((MainTab.TabIndex = 2) or (MainTab.TabIndex = 0)) then
+begin
+
+
+	if ((Key=VK_RIGHT) and (ssAlt in Shift)) then
+	begin
+		Form1.ToTheRight;
+	end;
+	if ((Key=VK_LEFT) and (ssAlt in Shift)) then
+	begin
+		Form1.ToTheLeft;
+	end;
+
+	if ((Key=VK_RIGHT) and (ssCtrl in Shift)) then
+	begin
+		Form1.ToTheEnd;
+	end;
+	if ((Key=VK_LEFT) and (ssCtrl in Shift)) then
+	begin
+		Form1.ToTheFirst;
+	end;
+
+	if ((Key=VK_TAB) and (ssCtrl in Shift)) then
+	begin
+
+        if (MainTab.TabIndex < 6) then
+        begin
+         MainTab.TabIndex := MainTab.TabIndex + 1;
+        end
+        else
+        begin
+         MainTab.TabIndex := 0;
+        end;
+	end;
+
 end;
+
+
+
+
 end;
 
 procedure TForm1.getOptions4Plan(plan: Integer);
@@ -3547,8 +4580,6 @@ Form1.clearOptionList();
 
 
 // Проверяем есть ли у плана опции, если есть, то проставляем...
-
-
 Form3.orderOptions_UQ.Connection := Form1.UniConnection1;
 Form3.orderOptions_UQ.SQL.Text := 'SELECT * FROM options WHERE plan_id = :planid;';
 Form3.orderOptions_UQ.ParamByName('planid').AsInteger := plan;
@@ -3573,6 +4604,26 @@ begin   // опции есть
     Form3.orderOptions_UQ.Next;
   end;
 end;
+end;
+
+function TForm1.GetOrderStatusByCode(Code: Integer): Integer;
+var
+status: Integer;
+begin
+
+
+// Нам надо определеить какому статусу соответствует код
+
+
+UniQuery10.Close;
+UniQuery11.SQL.Text :='Select * from get_orderstatus_by_code(:code) as status;';
+UniQuery11.ParamByName('code').AsInteger := Code;
+
+UniQuery11.ExecSQL;
+status := UniQuery11.FieldByName('status').AsInteger;
+Result :=   status;
+UniQuery11.Close;
+
 end;
 
 procedure TForm1.StringGrid3DrawCell(Sender: TObject; ACol, ARow: Integer;
@@ -3605,35 +4656,7 @@ begin
     ARow], Length(TStringGrid(Sender).Cells[ACol, ARow]), r, DT_SINGLELINE or
     DT_VCENTER or DT_CENTER);
 
-  { StringGrid3.Canvas.Pen.Width:=1;
-    StringGrid3.Canvas.MoveTo(0, rect.Bottom);
-    StringGrid3.Canvas.LineTo(rect.Right, rect.Bottom); }
 
-
-  // StringGrid3.Canvas.FillRect(Rect);
-
-  { with Sender as TStringGrid do begin
-    s:=cells[acol,arow]; //сохраняем текст из ячейки
-    canvas.FillRect (rect);
-    //перерисовываем ячейку, здесь же можно изменить цвет
-    rect.right:=rect.Right-2;
-    //смещение текста внутри ячейки, можно не делать
-    DrawText(canvas.handle,pchar(s),-1,Rect,
-    DT_SINGLELINE OR DT_VCENTER OR DT_CENTER);
-
-
-
-    end; }
-
-  { with StringGrid3.Canvas do begin
-    r:=StringGrid3.CellRect(acol,arow) ;
-    FillRect(r);
-    TextOut(r.left+((r.Right-r.Left) div 2)-(TextWidth(StringGrid3.Cells[acol,arow]) div 2),
-    r.Top,StringGrid3.Cells[acol,arow]);
-
-
-
-    end; }
 
 end;
 
@@ -3650,5 +4673,48 @@ Self.orderType := orderType;
 Self.orderSubType := orderSubType;
 Self.Plan := Plan;
 end;
+
+ // Заполняем картинки заказов для воронки
+procedure TForm1.PaintFunnelImage(List1: TListBox; Control: TWinControl; Index: Integer; Rect: TRect; listType: Integer);
+  const
+    W = 32;
+    H = 32;
+  var
+    BMPRect: TRect;
+
+  begin
+    with (Control as TListBox).Canvas do
+  begin
+    //FillRect(Rect);
+
+
+
+   case listType of
+    1 :     //interest
+    begin
+           List1.Canvas.Draw(0, Rect.Top, interestImage.Picture.Graphic);
+    end;
+    2 :         //contact
+    begin
+          List1.Canvas.Draw(0, Rect.Top, calImage.Picture.Graphic);
+    end;
+    3 :        //sale
+    begin
+          List1.Canvas.Draw(0, Rect.Top, camImage.Picture.Graphic);
+    end;
+    4 :        //done
+    begin
+          List1.Canvas.Draw(0, Rect.Top, funnelImage1.Picture.Graphic);
+    end;
+end;
+
+
+
+    BMPRect := Bounds(Rect.Left, Rect.Top, W, H);
+    TextOut(Rect.Left+W+7, Rect.Top+10, List1.Items[index]);
+  end;
+
+end;
+
 
 end.

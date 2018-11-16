@@ -155,6 +155,13 @@ if Assigned(TreeView1.Selected) then
       begin
       ChangeOrderType(3, MyNode3.Plan);
       end;
+          if (Form1.currentMode = 1) then
+          begin
+            Form1.ForcedChangeLocalTypes(MyNode3.orderType, MyNode3.orderSubType, MyNode3.Plan);
+          end;
+
+
+
     end;
 
 end;
@@ -285,6 +292,10 @@ var
 begin
 
 Form1.UniQuery10.Close;
+
+if (Form1.currentMode = 0) then
+begin
+
 case s of
     1 :     //type
     begin
@@ -304,10 +315,29 @@ case s of
         Form1.UniQuery10.ParamByName('type').AsInteger := id;
         Form1.UniQuery10.ParamByName('id').AsString := Form1.UniDataSource5.DataSet.FieldByName('id').AsString;
     end;
+end;
+end
+else
+begin
+case s of
+    1 :         //type
+    begin
+      Form1.tempOrderType4AddEdit:=id;
+      Form1.ForcedChangeLocalTypes(id, -1, -1);
+    end;
+    2 :         //subtype
+    begin
+      Form1.tempOrderSubType4AddEdit:=id;
+      Form1.ForcedChangeLocalTypes(-1, id, -1);
 
-  end;
-
-Form1.UniQuery10.ExecSQL;
+    end;
+    3 :         //plan
+    begin
+      Form1.tempOrderPlan4AddEdit:=id;
+      Form1.ForcedChangeLocalTypes(-1, -1, id);
+    end;
+end;
+end;
 
 
 end;

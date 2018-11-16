@@ -663,7 +663,7 @@ object Form3: TForm3
     Left = 541
     Top = 375
     Width = 220
-    Height = 34
+    Height = 27
     Alignment = taCenter
     Enabled = False
     Font.Charset = DEFAULT_CHARSET
