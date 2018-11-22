@@ -17,6 +17,8 @@ SQL_UPDATE_ORDER_STATUS='UPDATE order_status SET status = :status WHERE order_st
 
 SQL_FUNCTION_UPDATE_ORDER_CODE='Select * from update_order_status_code(:code, :id);';
 
+SQL_UPDATE_CLEAR_STATUS='UPDATE orders SET order_status = null WHERE orders.id=:id;';
+
 
 
 

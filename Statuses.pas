@@ -23,6 +23,12 @@ type
     btnUpdate: TSpeedButton;
     btnAddStatus: TSpeedButton;
     btnSaveStatus: TSpeedButton;
+    Memo1: TMemo;
+    Label1: TLabel;
+    Label2: TLabel;
+    Memo2: TMemo;
+    Memo3: TMemo;
+    Label3: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure StatusesListDrawItem(Control: TWinControl; Index: Integer;
       Rect: TRect; State: TOwnerDrawState);
@@ -31,16 +37,22 @@ type
     procedure btnUpdateClick(Sender: TObject);
     procedure btnAddStatusClick(Sender: TObject);
     procedure btnSaveStatusClick(Sender: TObject);
+    procedure codesListSelect(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
     { Private declarations }
   public
     status2Dictionary: TDictionary<Integer, Integer>;
     codesDictionary: TDictionary<Integer, Integer>;
     statusListIndexAndIDDictionary: TDictionary<Integer, Integer>;
+    firstListIndexAndStatusID: TDictionary<Integer, Integer>;
+
     function findListIndexByCodeID(a: Integer): Integer;
     function findStatusIDByListIndex(a: Integer): Integer;
+    function findListIndexByStatusId(a: Integer): Integer;
     function findCodeIndexByCode(a: Integer): Integer;
     procedure initAll();
+    procedure MainListClick();
 
   end;
 
@@ -91,7 +103,8 @@ try
     UniQuery4Delete.Connection := Form1.UniConnection1;
     UniQuery4Delete.SQL.Text :=  SQL_SELECT_ORDERS_WITH_STATUS_TO_AVOID_SQL_ERROR;
     UniQuery4Delete.ParamByName('uid').value := Form1.UserID;
-    UniQuery4Delete.ParamByName('statusid').value := findStatusIDByListIndex(StatusesList.ItemIndex);
+          ShowMessage(inttostr(StatusesList.ItemIndex));
+    UniQuery4Delete.ParamByName('statusid').value := findStatusIDByListIndex(StatusesList.ItemIndex+1);
     UniQuery4Delete.ExecSQL;
 
   except
@@ -111,7 +124,7 @@ try
       UniQuery4Delete := TUniQuery.Create(nil);
       UniQuery4Delete.Connection := Form1.UniConnection1;
       UniQuery4Delete.SQL.Text :=  SQL_DELETE_STATUS_BY_ID;
-      UniQuery4Delete.ParamByName('id').value := findStatusIDByListIndex(StatusesList.ItemIndex);
+      UniQuery4Delete.ParamByName('id').value := findStatusIDByListIndex(StatusesList.ItemIndex+1);
       UniQuery4Delete.ExecSQL;
       initAll();
 
@@ -136,7 +149,7 @@ try
     UniQuery4Edit := TUniQuery.Create(nil);
     UniQuery4Edit.Connection := Form1.UniConnection1;
     UniQuery4Edit.SQL.Text := SQL_UPDATE_ORDER_STATUS;
-    UniQuery4Edit.ParamByName('id').value := findStatusIDByListIndex(StatusesList.ItemIndex);
+    UniQuery4Edit.ParamByName('id').value := findStatusIDByListIndex(StatusesList.ItemIndex+1);
     UniQuery4Edit.ParamByName('status').value := StatusEditBox.Text;
     UniQuery4Edit.ExecSQL;
 
@@ -145,19 +158,20 @@ try
     UniQuery4Edit.Free;
   end;
 
-UniQuery4Edit.Close;
+//UniQuery4Edit.Close;
 
   // Меняем КОД
 
 Selected := codesList.Items.Strings[codesList.ItemIndex];
-  if ((Selected <> '') and (findCodeIndexByCode(codesList.ItemIndex)<>-1)) then
+  if ((Selected <> '') and (findCodeIndexByCode(codesList.ItemIndex+1)<>-1)) then
   begin
     try
-      UniQuery4Edit := TUniQuery.Create(nil);
-      UniQuery4Edit.Connection := Form1.UniConnection1;
+    //  UniQuery4Edit := TUniQuery.Create(nil);
+ //     UniQuery4Edit.Connection := Form1.UniConnection1;
       UniQuery4Edit.SQL.Text := SQL_FUNCTION_UPDATE_ORDER_CODE;
-      UniQuery4Edit.ParamByName('code').value := findCodeIndexByCode(codesList.ItemIndex);
-      UniQuery4Edit.ParamByName('id').value := findStatusIDByListIndex(StatusesList.ItemIndex);
+      UniQuery4Edit.ParamByName('code').value := findCodeIndexByCode(codesList.ItemIndex+1);
+//      ShowMessage(IntToStr(findCodeIndexByCode(codesList.ItemIndex)-1));
+      UniQuery4Edit.ParamByName('id').value := findStatusIDByListIndex(StatusesList.ItemIndex+1);
       UniQuery4Edit.ExecSQL;
     
     except
@@ -174,6 +188,13 @@ end;
 procedure TStatusesForm.btnUpdateClick(Sender: TObject);
 begin
  initAll();
+end;
+
+procedure TStatusesForm.codesListSelect(Sender: TObject);
+begin
+Label1.Caption :=  IntToStr(findCodeIndexByCode(codesList.ItemIndex+1)) + ' - ' + IntToStr(codesList.ItemIndex);
+
+
 end;
 
 function TStatusesForm.findCodeIndexByCode(a: Integer): Integer;
@@ -215,6 +236,32 @@ if (status2Dictionary.ContainsKey(a)) then
   end;
 end;
 
+function TStatusesForm.findListIndexByStatusId(a: Integer): Integer;
+var
+  key: Integer;
+begin
+
+     if statusListIndexAndIDDictionary.ContainsValue(a) then
+  begin
+
+    for key in statusListIndexAndIDDictionary.Keys do
+    begin
+      if (statusListIndexAndIDDictionary[key] = a) then
+      begin
+        findListIndexByStatusId := key;
+        Break;
+      end;
+
+    end;
+  end
+  else
+  begin
+    findListIndexByStatusId := -1; // не нашли значение
+  end;
+
+
+end;
+
 function TStatusesForm.findStatusIDByListIndex(a: Integer): Integer;
 begin
 
@@ -234,7 +281,26 @@ end;
 
 procedure TStatusesForm.FormCreate(Sender: TObject);
 begin
-   initAll();
+
+if (Form1.loginbefore=true) then
+begin
+  if Form1.UniConnection1.Connected then
+  begin
+    initAll();
+  end;
+end;
+end;
+
+procedure TStatusesForm.FormShow(Sender: TObject);
+begin
+
+  // Надо выставить статус в списке, соответственно статусу заказа, который выбран
+  if ((Form1.UniDataSource5.DataSet.FieldByName('order_status').AsInteger>0)and ((Form1.UniDataSource5.DataSet.FieldByName('order_status').IsNull<>True))) then
+  begin
+    Label2.Caption := 'List Index - ID' + inttostr(Form1.UniDataSource5.DataSet.FieldByName('order_status').AsInteger)+' - ' + IntToStr(findListIndexByStatusId(Form1.UniDataSource5.DataSet.FieldByName('order_status').AsInteger));
+    StatusesList.ItemIndex := findListIndexByStatusId(Form1.UniDataSource5.DataSet.FieldByName('order_status').AsInteger)-1;
+    MainListClick();
+  end;
 end;
 
 procedure TStatusesForm.initAll;
@@ -265,6 +331,7 @@ begin
 status2Dictionary := TDictionary<Integer, Integer>.Create;
 codesDictionary := TDictionary<Integer, Integer>.Create;
 statusListIndexAndIDDictionary := TDictionary<Integer, Integer>.Create;
+firstListIndexAndStatusID := TDictionary<Integer, Integer>.Create;
 
      // Чистим список
 if (StatusesList.Items.Count>0) then
@@ -284,16 +351,24 @@ btnDeleteStatus.Enabled:=false;
    
      
 
-i:=0;
+i:=1;
   // Заполняем список
 StatusesGridUniQuery.First;
+Memo2.Clear;
+Memo3.Clear;
 
   while (not StatusesGridUniQuery.Eof) do
   begin
 
     StatusesList.Items.AddObject(StatusesGridUniQuery.FieldByName('status').AsString, TObject(StatusesGridUniQuery.FieldByName('id').AsInteger));
+
     status2Dictionary.Add(i, StatusesGridUniQuery.FieldByName('Code').AsInteger);
     statusListIndexAndIDDictionary.Add(i, StatusesGridUniQuery.FieldByName('id').AsInteger);
+//    firstListIndexAndStatusID
+
+    Memo2.Lines.Add(IntToStr(i) + ' - ' + IntToStr(StatusesGridUniQuery.FieldByName('Code').AsInteger));
+    Memo3.Lines.Add(IntToStr(i) + ' - ' + IntToStr(StatusesGridUniQuery.FieldByName('id').AsInteger));
+
     i:=i+1;
     StatusesGridUniQuery.Next;
 
@@ -301,6 +376,8 @@ StatusesGridUniQuery.First;
 
 // Окрашиваем фон списка
   StatusesList.Color := RGB(199, 234, 240);
+
+  Memo1.Clear;
 
  // Запрашиваем все "неизменяемые коды воронки"
   try
@@ -316,14 +393,15 @@ StatusesGridUniQuery.First;
 
 
     // Заполняем список кодов
-StatusesGridUniQuery.First;
-i:=0;
+CodesUniQuery.First;
+i:=1;
 
   while (not CodesUniQuery.Eof) do
   begin
 
     codesList.Items.AddObject(CodesUniQuery.FieldByName('Status').AsString, TObject(CodesUniQuery.FieldByName('id').AsInteger));
     codesDictionary.Add(i, CodesUniQuery.FieldByName('id').AsInteger);
+    Memo1.Lines.Add(IntToStr(i) + ' - ' + IntToStr(CodesUniQuery.FieldByName('id').AsInteger));
     i:=i+1;
     CodesUniQuery.Next;
 
@@ -332,7 +410,7 @@ i:=0;
 
 end;
 
-procedure TStatusesForm.StatusesListClick(Sender: TObject);
+procedure TStatusesForm.MainListClick;
 begin
 
 if (StatusesList.ItemIndex>-1) then
@@ -340,7 +418,21 @@ begin
     btnSaveStatus.Enabled := true;
     btnDeleteStatus.Enabled := true;
     StatusEditBox.Text :=  StatusesList.Items[StatusesList.ItemIndex];
-    codesList.ItemIndex :=findCodeIndexByCode(findListIndexByCodeID(StatusesList.ItemIndex));
+
+if ((findCodeIndexByCode(findListIndexByCodeID(StatusesList.ItemIndex+1))-1)>0) then
+begin
+    codesList.ItemIndex :=(findCodeIndexByCode(findListIndexByCodeID(StatusesList.ItemIndex+1))-1);
+end
+else
+begin
+     codesList.ItemIndex:=-1;
+end;
+
+
+
+
+    Label2.Caption := 'findListIndexByCodeID conteins List Index: ' + IntToStr(StatusesList.ItemIndex+1) + ' - '+IntToStr(findListIndexByCodeID(StatusesList.ItemIndex+1));
+    Label3.Caption := 'findCodeIndexByCode: ' + IntToStr(findCodeIndexByCode(findListIndexByCodeID(StatusesList.ItemIndex+1)));
 end
 else
 begin
@@ -348,6 +440,13 @@ begin
     btnDeleteStatus.Enabled := false;
 
 end;
+
+end;
+
+procedure TStatusesForm.StatusesListClick(Sender: TObject);
+begin
+       MainListClick();
+
 end;
 
 procedure TStatusesForm.StatusesListDrawItem(Control: TWinControl; Index: Integer; Rect: TRect; State: TOwnerDrawState);

@@ -3,7 +3,7 @@ object StatusesForm: TStatusesForm
   Top = 0
   BorderStyle = bsDialog
   Caption = #1057#1090#1072#1090#1091#1089#1099
-  ClientHeight = 267
+  ClientHeight = 389
   ClientWidth = 900
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -14,6 +14,7 @@ object StatusesForm: TStatusesForm
   OldCreateOrder = False
   Position = poDesktopCenter
   OnCreate = FormCreate
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object btnDeleteStatus: TSpeedButton
@@ -574,6 +575,27 @@ object StatusesForm: TStatusesForm
       0000000000000000000000000000000000000000000000000000}
     OnClick = btnSaveStatusClick
   end
+  object Label1: TLabel
+    Left = 560
+    Top = 112
+    Width = 31
+    Height = 13
+    Caption = 'Label1'
+  end
+  object Label2: TLabel
+    Left = 416
+    Top = 172
+    Width = 31
+    Height = 13
+    Caption = 'Label2'
+  end
+  object Label3: TLabel
+    Left = 72
+    Top = 296
+    Width = 31
+    Height = 13
+    Caption = 'Label3'
+  end
   object StatusesList: TListBox
     Left = 8
     Top = 8
@@ -595,7 +617,7 @@ object StatusesForm: TStatusesForm
     Left = 407
     Top = 8
     Width = 485
-    Height = 33
+    Height = 24
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -13
@@ -618,29 +640,52 @@ object StatusesForm: TStatusesForm
     Font.Style = []
     ParentFont = False
     TabOrder = 2
+    OnSelect = codesListSelect
+  end
+  object Memo1: TMemo
+    Left = 652
+    Top = 88
+    Width = 185
+    Height = 89
+    Lines.Strings = (
+      'Memo1')
+    TabOrder = 3
+  end
+  object Memo2: TMemo
+    Left = 652
+    Top = 263
+    Width = 185
+    Height = 118
+    Lines.Strings = (
+      'Memo2')
+    TabOrder = 4
+  end
+  object Memo3: TMemo
+    Left = 335
+    Top = 263
+    Width = 185
+    Height = 118
+    Lines.Strings = (
+      'Memo3')
+    TabOrder = 5
   end
   object statusesUDS: TUniDataSource
-    DataSet = UniQuery1
     Left = 448
     Top = 120
   end
   object UniQuery1: TUniQuery
-    Connection = Form1.UniConnection1
     SQL.Strings = (
       'select * from order_status')
     Left = 416
     Top = 120
   end
   object codesUQ: TUniQuery
-    Connection = Form1.UniConnection1
     SQL.Strings = (
       'select * from "dct_ImmutableSalesFunnelStatuses";')
-    MasterSource = Form1.UniDataSource1
     Left = 864
     Top = 272
   end
   object codeUDS: TUniDataSource
-    DataSet = codesUQ
     Left = 480
     Top = 120
   end

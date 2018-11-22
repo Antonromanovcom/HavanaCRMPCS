@@ -33,7 +33,8 @@ uses
   dxSkinVisualStudio2013Blue, dxSkinVisualStudio2013Dark,
   dxSkinVisualStudio2013Light, dxSkinVS2010, dxSkinWhiteprint,
   dxSkinXmas2008Blue, cxInplaceContainer, unit3, ThumbnailList, Vcl.ImgList,
-  dxGDIPlusClasses, Math, Statuses;
+  dxGDIPlusClasses, Math, Statuses, Vcl.Buttons, Dictionary, sSpeedButton,
+  acImage;
 
 type
 
@@ -126,7 +127,6 @@ type
     Chart2: TChart;
     BarSeries1: TBarSeries;
     StringGrid3: TStringGrid;
-    WebBrowser1: TWebBrowser;
     Image1: TImage;
     UniQuery11: TUniQuery;
     userinfoNamelbl: TLabel;
@@ -171,6 +171,28 @@ type
     calImage: TImage;
     UniStoredProc1: TUniStoredProc;
     btnStatuses: TButton;
+    btnClearStatus: TSpeedButton;
+    Edit3: TEdit;
+    Edit5: TEdit;
+    Button14: TButton;
+    Image4: TImage;
+    ConnectionServerEditBox: TEdit;
+    ConnectionPortEditBox: TEdit;
+    ConnectionUserEditBox: TEdit;
+    ConnectionPasswordEditBox: TMaskEdit;
+    ConnectionDBEditBox: TEdit;
+    ConnectionServerLabel: TLabel;
+    ConnectionPortLabel: TLabel;
+    ConnectionUserLabel: TLabel;
+    ConnectionPasswordLabel: TLabel;
+    ConnectionDBLabel: TLabel;
+    LocalhostChkBx: TCheckBox;
+    btnConnect: TsSpeedButton;
+    btnSaveConnection: TsSpeedButton;
+    sImage1: TsImage;
+    sImage2: TsImage;
+    sImage3: TsImage;
+    btnDisconnect: TsSpeedButton;
 
     procedure Activate();
     procedure FormActivate(Sender: TObject);
@@ -231,6 +253,12 @@ type
     procedure DoneListBoxDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure btnStatusesClick(Sender: TObject);
+    procedure btnClearStatusClick(Sender: TObject);
+    procedure Button14Click(Sender: TObject);
+    procedure LocalhostChkBxClick(Sender: TObject);
+    procedure btnConnectClick(Sender: TObject);
+    procedure btnDisconnectClick(Sender: TObject);
+    procedure btnSaveConnectionClick(Sender: TObject);
 
 
   private
@@ -245,6 +273,7 @@ type
     procedure FirstOrder();
     procedure FirstClient();
     procedure PaintFunnelImage(List1 :TListBox; Control: TWinControl; Index: Integer; Rect: TRect; listType: Integer);
+
 
 
   public
@@ -278,6 +307,7 @@ type
     procedure ToTheLeft();
     procedure ToTheEnd();
     procedure ToTheFirst();
+    procedure UpdateForm();
     function GetOrderStatusByCode(Code:Integer): Integer;
 
 const
@@ -1216,6 +1246,103 @@ currentMode:= 0;
 	end;
 end;
 
+
+procedure TForm1.UpdateForm;
+var
+result: string;
+LCount: Integer;
+ListIndex: Integer;
+CustomerID: Integer;
+localOrderType, localOrderSubType, localOrderPlan: String;
+
+begin
+currentMode:= 0;
+StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
+
+		UniDataSource5.DataSet.First;
+		OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
+		OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
+
+		// Меняем статус
+		orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
+
+
+		ListIndex := 0;
+		CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
+		ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
+
+		if (ListIndex = -1) then
+		Customer.Text := ''
+		else
+		Customer.ItemIndex := ListIndex;
+		Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
+
+		// Получаем тип заказа
+		localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
+		localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
+		localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
+
+		// Обрезаем строки
+		if (Length(localOrderSubType)>22) then
+		begin
+			Delete(localOrderSubType, 22, Length(localOrderSubType));
+			localOrderSubType:=localOrderSubType+'...';
+		end;
+
+		Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
+		orderType.Text:=localOrderType;
+		OrderSubType.Text:=localOrderSubType;
+		OrderPlan.Text:=localOrderPlan;
+
+
+		// Меняем текст кнопки
+		if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
+		begin
+			Button13.Caption:='Добавить Тип Заказа';
+		end
+		else
+		begin
+			Button13.Caption:='Изменить Тип Заказа';
+		end;
+
+		if (UniDataSource5.DataSet.FieldByName('client').AsString) = '' then
+		RecieveDate.Date := Date
+		else
+		RecieveDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date').AsString);
+
+		if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
+		OrderDate.Date := Date
+		else
+		OrderDate.Date := StrToDateTime(UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
+
+		StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +
+		inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
+
+    UniDataSource1.DataSet.First;
+
+		StatusBar1.Panels[0].Text := 'Клинтов всего | Текущий: ' +
+		inttostr(clientsRecCount) + ' | ' +
+		inttostr(UniDataSource1.DataSet.RecNo);
+
+		Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
+		Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
+
+		eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
+		ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
+		eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
+
+		if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
+		TestDate.Date := Date
+		else
+		TestDate.Date := StrToDateTime (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
+
+
+		ComboBox2.ItemIndex :=(UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
+
+
+
+end;
+
 procedure TForm1.UserTabShow(Sender: TObject);
 begin
   currentMode:= 0;
@@ -1928,6 +2055,30 @@ begin
   // act();
 end;
 
+// Чистим статус
+procedure TForm1.btnClearStatusClick(Sender: TObject);
+var
+UniQuery4ClearStatus: TUniQuery;
+begin
+
+
+try
+  UniQuery4ClearStatus := TUniQuery.Create(nil);
+  UniQuery4ClearStatus.Connection := Form1.UniConnection1;
+  UniQuery4ClearStatus.SQL.Text :=  Dictionary.SQL_UPDATE_CLEAR_STATUS;
+  UniQuery4ClearStatus.ParamByName('id').AsInteger := UniDataSource5.DataSet.FieldByName('order_status').AsInteger;
+  UniQuery4ClearStatus.ExecSQL;
+
+
+  except
+    ShowMessage('Ошибка Базы данных!');
+    UniQuery4ClearStatus.Free;
+  end;
+
+  OrderStatus.ItemIndex:=-1;
+
+end;
+
 procedure TForm1.btnStatusesClick(Sender: TObject);
 begin
 StatusesForm.Show;
@@ -1937,7 +2088,6 @@ procedure TForm1.Button10Click(Sender: TObject);
 
 var
   i, tablevalue: Integer;
-  // s, t : TLineSeries;
   title: string;
 
 begin
@@ -2360,16 +2510,12 @@ begin
 end;
 end;
 
+procedure TForm1.Button14Click(Sender: TObject);
+begin
+ReportTab.Enabled := true;
+end;
+
 procedure TForm1.Button1Click(Sender: TObject);
-
-{var
-  Idx: Integer;
-  y: Integer;
-
-  value: Integer;
-  ListIndex: Integer;
-  CustomerID: Integer;
-  localOrderType, localOrderSubType, localOrderPlan: String; }
 
 begin
  { currentMode:= 0;
@@ -2616,129 +2762,8 @@ begin
 end;
 
 procedure TForm1.LastButtonClick(Sender: TObject);
-
-{var
-  Idx: Integer;
-  y: Integer;
-
-  value: Integer;
-  ListIndex: Integer;
-  CustomerID: Integer;
-  localOrderType, localOrderSubType, localOrderPlan: String;
-  }
-
 begin
-{  currentMode:= 0;
-  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
-
-  if (MainTab.TabIndex = 2) then
-  begin
-
-    UniDataSource5.DataSet.Last;
-    OrderName.Text := UniDataSource5.DataSet.FieldByName('order_short_name').AsString;
-    OrderCost.Text := UniDataSource5.DataSet.FieldByName('order_cost').AsString;
-
-  // Меняем статус
-    orderstatus.ItemIndex := findIDByStatus(UniDataSource5.DataSet.FieldByName('order_status').AsInteger) - 1;
-
-
-    ListIndex := 0;
-    CustomerID := UniDataSource5.DataSet.FieldByName('client').AsInteger;
-    ListIndex := arraysearch(CustomerArr, CustomerID, clientsRecCount);
-
-    if (ListIndex = -1) then
-      Customer.Text := ''
-    else
-      Customer.ItemIndex := ListIndex;
-
-//    Jobstype.ItemIndex := (UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
-    Edit4.Text := UniDataSource5.DataSet.FieldByName('client').AsString;
-
-     // Получаем тип заказа
-    localOrderType:=  findOrderTupeByID(UniDataSource5.DataSet.FieldByName('order_type').AsInteger); //Поле Тип
-    localOrderSubType:=  findOrderSubTypeByID(UniDataSource5.DataSet.FieldByName('order_sub_type').AsInteger); //Поле ПОДТип
-    localOrderPlan:=  findOrderPlanByID(UniDataSource5.DataSet.FieldByName('order_plan').AsInteger); //Поле План
-
-    // Обрезаем строки
-    if (Length(localOrderSubType)>22) then
-    begin
-      Delete(localOrderSubType, 22, Length(localOrderSubType));
-      localOrderSubType:=localOrderSubType+'...';
-    end;
-
-    Jobstype.ItemIndex := findIDByJob(UniDataSource5.DataSet.FieldByName('order_type').AsInteger) - 1;
-    orderType.Text:=localOrderType;
-    OrderSubType.Text:=localOrderSubType;
-    OrderPlan.Text:=localOrderPlan;
-
-
-    // Меняем текст кнопки
-    if (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_sub_type').IsNull=true) and (UniDataSource5.DataSet.FieldByName('order_type').IsNull=true) then
-    begin
-    Button13.Caption:='Добавить Тип Заказа';
-    end
-    else
-    begin
-         Button13.Caption:='Изменить Тип Заказа';
-    end;
-
-
-
-    if (UniDataSource5.DataSet.FieldByName('order_create_date').AsString) = ''
-    then
-      RecieveDate.Date := Date
-    else
-      RecieveDate.Date :=
-        StrToDateTime(UniDataSource5.DataSet.FieldByName('order_create_date')
-        .AsString);
-
-    if (UniDataSource5.DataSet.FieldByName('order_deadline').AsString) = '' then
-      OrderDate.Date := Date
-    else
-      OrderDate.Date := StrToDateTime
-        (UniDataSource5.DataSet.FieldByName('order_deadline').AsString);
-
-    Edit1.Text := inttostr(UniDataSource5.DataSet.RecNo);
-    Edit2.Text := inttostr(UniDataSource5.DataSet.RecordCount);
-
-    StatusBar1.Panels[1].Text := 'Заказов всего | Текущий: ' +
-      inttostr(ordersRecCount) + ' | ' + inttostr(UniDataSource5.DataSet.RecNo);
-
-  end
-  else
-  begin
-
-    UniDataSource1.DataSet.Last;
-
-    { if (UniDataSource1.DataSet.FieldByName('BirthdayUnknow').AsInteger = 1) then
-      birthdayunknowChkBx.Checked := true
-      else
-      birthdayunknowChkBx.Checked := FALSE;
-    }
- {
-    StatusBar1.Panels[0].Text := 'Клинтов всего | Текущий: ' +
-      inttostr(clientsRecCount) + ' | ' +
-      inttostr(UniDataSource1.DataSet.RecNo);
-
-    eName.Text := UniDataSource1.DataSet.FieldByName('Name').AsString;
-    ePhone.Text := UniDataSource1.DataSet.FieldByName('Phone').AsString;
-    eEmail.Text := UniDataSource1.DataSet.FieldByName('Email').AsString;
-    // eOrderedDate.Text := UniDataSource1.DataSet.FieldByName('OrderDateTime').AsString;
-
-    if (UniDataSource1.DataSet.FieldByName('Birthday').AsString) = '' then
-      TestDate.Date := Date
-    else
-      TestDate.Date := StrToDateTime
-        (UniDataSource1.DataSet.FieldByName('Birthday').AsString);
-
-    // ComboBox1.ItemIndex := (UniDataSource1.DataSet.FieldByName('Status'.AsInteger) - 1;
-    ComboBox2.ItemIndex :=
-      (UniDataSource1.DataSet.FieldByName('whereclientfrom').AsInteger) - 1;
-
-  end; }
-
 Form1.ToTheEnd();
-
 end;
 
 procedure TForm1.InterestListBoxDragDrop(Sender, Source: TObject; X, Y: Integer);
@@ -3042,6 +3067,24 @@ end;
 
 end;
 
+procedure TForm1.LocalhostChkBxClick(Sender: TObject);
+begin
+if LocalhostChkBx.Checked = true then
+begin
+
+  ConnectionServerEditBox.Text:='localhost';
+  ConnectionServerEditBox.Enabled:=False;
+
+end
+else
+begin
+  ConnectionServerEditBox.Text:='';
+  ConnectionServerEditBox.Enabled:=True;
+
+end;
+
+end;
+
 procedure TForm1.noOptions;
 begin
   Form3.OptionsExists:=false;
@@ -3225,12 +3268,8 @@ begin
   Login := LoginField.Text;
   Password := PasswordField.Text;
 
-  // Login := '2';
-  // Password := '2';
 
-  // SELECT * from users where users.login = '1' AND pwd = '1'
-  UniQuery4.SQL.Text :=
-    'SELECT * from users where login = :loginparam AND pwd = :passwordparam;';
+  UniQuery4.SQL.Text := 'SELECT * from users where login = :loginparam AND pwd = :passwordparam;';
   UniQuery4.ParamByName('loginparam').AsString := Login;
   UniQuery4.ParamByName('passwordparam').AsString := Password;
   UniQuery4.Execute;
@@ -3240,8 +3279,8 @@ begin
   begin
     for i := 0 to UniQuery4.Fields.Count - 1 do
       strVar := strVar + VarToStr(UniQuery4.Fields[i].value) + ', ';
-    LCount := LCount + 1;
-    UniQuery4.Next;
+      LCount := LCount + 1;
+     UniQuery4.Next;
   end;
   strVar := VarToStr(UniQuery4.Fields[0].value) + ', ';
 
@@ -3252,9 +3291,8 @@ begin
     TabSheet2.TabVisible := true;
     TabSheet1.TabVisible := true;
 
-    // loginbefore := false;
+
     SenderTab.TabVisible := true;
-    // OrderGridTab.TabVisible := true;
     OrderTab.TabVisible := true;
     ReportTab.TabVisible := true;
     UserTab.TabVisible := true;
@@ -3300,36 +3338,10 @@ begin
 end;
 
 procedure TForm1.Button6Click(Sender: TObject);
-var
-  clientsRecCountbefore: Integer;
+
 begin
 
-  currentMode:= 0;
-  StatusBar1.Panels[2].Text := 'Режим: СТАНДАРТ';
-
-  UniQuery1.Close;
-  UniQuery1.SQL.Text := 'SELECT * FROM clients WHERE user_id = :userid;';
-  UniQuery1.ParamByName('userid').AsString := UserID;
-  UniQuery1.Execute;
-  clientsRecCountbefore := clientsRecCount;
-  clientsRecCount := UniQuery1.RecordCount;
-
-  FirstClient();
-
-  if (clientsRecCountbefore = 0) then
-  begin
-    OrderTab.TabVisible := true;
-    SenderTab.TabVisible := true;
-    ReportTab.TabVisible := true;
-    UserTab.TabVisible := true;
-
-  end;
-
-  UniDataSource1.DataSet.Refresh;
-
-  FirstOrder();
-
-  UniDataSource5.DataSet.Refresh;
+UpdateForm();
 
 end;
 
@@ -3743,18 +3755,7 @@ begin
 
   // WEB ABOUT
 
-  FIsStartPage := true;
-  { Webbrowser1.Navigate('file:///' + LOCAL_PAGE);
-    Webbrowser1.Navigate(ExtractFilePath(Application.ExeName)+'About\Untitled-2.html');
-
-    //Webbrowser1.Navigate(); }
-  { WebBrowser1.Navigate('http://www.borland.com', Flags,
-    TargetFrameName, PostData, Headers); }
-  // WebBrowser1.Navigate('C:\Users\Анатолий\Documents\Embarcadero\Studio\Projects\Win32\Debug\mind.htm');
-
-  WebBrowser1.Navigate('http://havana-crm.su/About/About.html');
-
-  FIsStartPage := FALSE;
+  
   EnableOffAllButtons();
 
 end;
@@ -3825,6 +3826,100 @@ end;
 PaintFunnelImage(SoldListBox, Control, Index, Rect, 3);
 
 
+end;
+
+// Записываем в файл данные коннекта
+procedure TForm1.btnSaveConnectionClick(Sender: TObject);
+var
+  test2: String;
+begin
+
+ test2 := ExtractFilePath(Application.ExeName) + 'login.ini';
+ IniFile := TIniFile.Create(test2);
+
+// if IniFile.SectionExists('SignInData') then
+// begin
+
+    IniFile.WriteString('ConnectData', 'Server', ConnectionServerEditBox.Text);
+    IniFile.WriteString('ConnectData', 'Port', ConnectionPortEditBox.Text);
+    IniFile.WriteString('ConnectData', 'DB', ConnectionDBEditBox.Text);
+    IniFile.WriteString('ConnectData', 'User', ConnectionUserEditBox.Text);
+    IniFile.WriteString('ConnectData', 'PW', ConnectionPasswordEditBox.Text);
+    IniFile.Free;
+
+// end;
+
+end;
+
+procedure TForm1.btnConnectClick(Sender: TObject);
+var MainQuery: TUniQuery;
+DS : TUniDataSource;
+codeDS: TDatasource;
+i: Integer;
+
+begin
+// Проверим, чтобы поля были не пустые.
+
+if (Length(ConnectionServerEditBox.Text)<1) then   //Server
+ConnectionServerEditBox.Text := 'localhost';
+if (Length(ConnectionPortEditBox.Text)<1) then    //Port
+ConnectionPortEditBox.Text := '5432';
+if (Length(ConnectionDBEditBox.Text)<1) then    //DB
+ConnectionDBEditBox.Text := 'postgres';
+if (Length(ConnectionUserEditBox.Text)<1) then    //User
+ConnectionUserEditBox.Text := 'postgres';
+
+// Коннектимся
+
+    Form1.UniConnection1.Close;
+    Form1.UniConnection1.ProviderName := 'PostgreSQL';
+    Form1.UniConnection1.Server := ConnectionServerEditBox.Text;
+    Form1.UniConnection1.Port := StrToInt(ConnectionPortEditBox.Text);
+    Form1.UniConnection1.Database := ConnectionDBEditBox.Text;
+    Form1.UniConnection1.Username := ConnectionUserEditBox.Text;
+    Form1.UniConnection1.Password := ConnectionPasswordEditBox.Text;
+
+    try
+      try
+        UniConnection1.Open;
+      except
+      end;
+     finally
+
+       if UniConnection1.Connected then
+       begin
+        { connection successful }
+        sImage1.Picture.LoadFromFile('Greenlight.png');
+        btnSaveConnection.Enabled := True;
+
+
+       end
+       else
+       begin
+
+         loginbefore := FALSE;
+         TabSheet2.TabVisible := FALSE;
+         TabSheet1.TabVisible := FALSE;
+         OrderTab.TabVisible := FALSE;
+         ReportTab.TabVisible := FALSE;
+         UserTab.TabVisible := FALSE;
+         SalesFunnel.TabVisible  := FALSE;
+
+     //    ShowMessage('Database access not possible, check connection string');
+
+        end;
+     end;
+end;
+
+procedure TForm1.btnDisconnectClick(Sender: TObject);
+begin
+         loginbefore := FALSE;
+         TabSheet2.TabVisible := FALSE;
+         TabSheet1.TabVisible := FALSE;
+         OrderTab.TabVisible := FALSE;
+         ReportTab.TabVisible := FALSE;
+         UserTab.TabVisible := FALSE;
+         SalesFunnel.TabVisible  := FALSE;
 end;
 
 procedure TForm1.StringGrid1DrawCell(Sender: TObject; ACol, ARow: Integer;
@@ -4420,8 +4515,6 @@ begin
   StringGrid3.ColWidths[1] := 320;
   StringGrid3.ColWidths[2] := 170;
   StringGrid3.ColWidths[3] := 250;
-  // StringGrid3.ColWidths[4]:=250;
-
   StringGrid3.RowHeights[0] := 70;
 
   log := LoginField.Text;
@@ -4431,22 +4524,18 @@ begin
   IniFile := TIniFile.Create(test2);
 
   if IniFile.SectionExists('SignInData') then
-  // если раздел найден то показываем соответствующее сообщение
 
   begin
-    // ShowMessage('Раздел присутствует');
+
     loginbefore := true;
-    loginglobal := IniFile.ReadString('SignInData', 'Login',
-      'ErrorIniFileReadingL!');
-    passwordglobal := IniFile.ReadString('SignInData', 'Password',
-      'ErrorIniFileReadingP!');
+    loginglobal := IniFile.ReadString('SignInData', 'Login', 'ErrorIniFileReadingL!');
+    passwordglobal := IniFile.ReadString('SignInData', 'Password', 'ErrorIniFileReadingP!');
     IniFile.Free;
     Result1 := '';
     Login := loginglobal;
     Password := passwordglobal;
 
-    UniQuery4.SQL.Text :=
-      'SELECT * from users where login = :loginparam AND pwd = :passwordparam;';
+    UniQuery4.SQL.Text := 'SELECT * from users where login = :loginparam AND pwd = :passwordparam;';
     UniQuery4.ParamByName('loginparam').AsString := Login;
     UniQuery4.ParamByName('passwordparam').AsString := Password;
     UniQuery4.Execute;
@@ -4461,7 +4550,6 @@ begin
       UniQuery4.Next;
     end;
 
-    // if (UniQuery4.Fields[0].value = Null or UniQuery4.Fields[0].value=0) then UserID :='0';
     UserID := UniQuery4.Fields[0].AsString;
 
     if (UserID = '') or (UserID = Null) then
@@ -4471,7 +4559,6 @@ begin
     TabSheet1.TabVisible := true;
     TabSheet3.TabVisible := FALSE;
 
-    // 'SELECT * FROM clients LEFT OUTER JOIN STATUS ON clients.Status = STATUS.ID_STATUS LEFT OUTER JOIN From_Type_Table ON clients.ClientFrom = From_Type_Table.ID_FROM WHERE User = :userid;';
     UniQuery1.SQL.Text := 'SELECT * FROM clients WHERE user_id = :userid;';
     UniQuery1.ParamByName('userid').AsLargeInt := StrToInt64(UserID);
     UniQuery1.Execute;
@@ -4511,13 +4598,15 @@ begin
   begin
 
     loginbefore := FALSE;
+    PageControl1.ActivePageIndex:= 0;
     TabSheet2.TabVisible := FALSE;
     TabSheet1.TabVisible := FALSE;
     SenderTab.TabVisible := FALSE;
-    // OrderGridTab.TabVisible := FALSE;
     OrderTab.TabVisible := FALSE;
     ReportTab.TabVisible := FALSE;
     UserTab.TabVisible := FALSE;
+    SalesFunnel.TabVisible  := FALSE;
+
 
   end;
 

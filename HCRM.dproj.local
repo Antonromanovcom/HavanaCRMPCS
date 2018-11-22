@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>1899.12.30 00:00:00.000.533,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Project1.dproj=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\HCRM.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.076,C:\GIT\HavanaCRMPCS\Unit4.pas=C:\GIT\HavanaCRMPCS\Dictionary.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.641,C:\GIT\HavanaCRMPCS\Unit4.pas=C:\GIT\HavanaCRMPCS\Statuses.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.153,=C:\GIT\HavanaCRMPCS\Unit4.pas</Transaction>
     <Transaction>1899.12.30 00:00:00.000.199,=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.153,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Unit1.pas=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\UMain.pas</Transaction>
-    <Transaction>1899.12.30 00:00:00.000.153,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Unit1.dfm=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\UMain.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.641,C:\GIT\HavanaCRMPCS\Unit4.dfm=C:\GIT\HavanaCRMPCS\Statuses.dfm</Transaction>
     <Transaction>1899.12.30 00:00:00.000.578,=C:\GIT\HavanaCRMPCS\Unit3.pas</Transaction>
-    <Transaction>2018.11.15 12:18:43.303,=C:\GIT\HavanaCRMPCS\Unit4.pas</Transaction>
-    <Transaction>2018.11.15 12:18:57.641,C:\GIT\HavanaCRMPCS\Statuses.dfm=C:\GIT\HavanaCRMPCS\Unit4.dfm</Transaction>
-    <Transaction>2018.11.15 12:18:57.641,C:\GIT\HavanaCRMPCS\Statuses.pas=C:\GIT\HavanaCRMPCS\Unit4.pas</Transaction>
-    <Transaction>2018.11.15 14:51:34.153,=C:\GIT\HavanaCRMPCS\Unit4.pas</Transaction>
-    <Transaction>2018.11.15 14:52:02.076,C:\GIT\HavanaCRMPCS\Dictionary.pas=C:\GIT\HavanaCRMPCS\Unit4.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.153,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\UMain.pas=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.153,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\UMain.dfm=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.303,=C:\GIT\HavanaCRMPCS\Unit4.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.533,C:\Users\Anton\Documents\Embarcadero\Studio\Projects\HCRM.dproj=C:\Users\Anton\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
   </Transactions>
 </BorlandProject>
