@@ -2250,7 +2250,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = TabSheet3
+    ActivePage = OrderTab
     TabOrder = 0
     TabStop = False
     object TabSheet3: TTabSheet
@@ -19781,7 +19781,7 @@ object Form1: TForm1
         SkinData.SkinSection = 'CHECKBOX'
       end
       object btnDisconnect: TsSpeedButton
-        Left = 703
+        Left = 704
         Top = 288
         Width = 138
         Height = 57
@@ -20297,15 +20297,6 @@ object Form1: TForm1
     Caption = #1054#1073#1085#1086#1074#1080#1090#1100
     TabOrder = 17
     OnClick = Button6Click
-  end
-  object Button14: TButton
-    Left = 549
-    Top = 533
-    Width = 75
-    Height = 18
-    Caption = 'Button14'
-    TabOrder = 18
-    OnClick = Button14Click
   end
   object UniQuery1: TUniQuery
     Connection = UniConnection1

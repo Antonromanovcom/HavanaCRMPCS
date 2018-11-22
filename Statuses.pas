@@ -12,10 +12,6 @@ uses
 
 type
   TStatusesForm = class(TForm)
-    statusesUDS: TUniDataSource;
-    UniQuery1: TUniQuery;
-    codesUQ: TUniQuery;
-    codeUDS: TUniDataSource;
     StatusesList: TListBox;
     StatusEditBox: TEdit;
     codesList: TComboFlat;
@@ -312,7 +308,7 @@ i: Integer;
 
 begin
 
-   UniQuery1.ExecSQL;
+ //  UniQuery1.ExecSQL;
 
 // Запрашиваем все статусы
   try
@@ -453,18 +449,35 @@ procedure TStatusesForm.StatusesListDrawItem(Control: TWinControl; Index: Intege
   begin
 
   with StatusesList.Canvas do begin
-    if (Index + 1) mod 2 = 0 then begin
-      //Если прорисовываемая строка чётная.
-      Brush.Color := RGB(199, 234, 240);
-      FillRect(Rect);
-      Font.Color := RGB(0, 0, 0);
-      TextOut(Rect.Left, Rect.Top, StatusesList.Items[Index]);
-    end else begin
-      //Если прорисовываемая строка нечётная.
-      Brush.Color := RGB(128, 128, 128);
-      FillRect(Rect);
-      Font.Color := RGB(255, 255, 255);
-      TextOut(Rect.Left, Rect.Top, StatusesList.Items[Index]);
+    if (StatusesList.ItemIndex=Index) then
+    begin
+
+    //Если прорисовываемая строка выделенная.
+         Brush.Color := RGB(240, 209, 19);
+         FillRect(Rect);
+         Font.Color := RGB(0, 0, 0);
+         TextOut(Rect.Left, Rect.Top, StatusesList.Items[Index]);
+
+
+    end
+    else
+    begin
+
+
+
+       if (Index + 1) mod 2 = 0 then begin
+          //Если прорисовываемая строка чётная.
+         Brush.Color := RGB(199, 234, 240);
+         FillRect(Rect);
+         Font.Color := RGB(0, 0, 0);
+         TextOut(Rect.Left, Rect.Top, StatusesList.Items[Index]);
+       end else begin
+          //Если прорисовываемая строка нечётная.
+         Brush.Color := RGB(128, 128, 128);
+         FillRect(Rect);
+         Font.Color := RGB(255, 255, 255);
+         TextOut(Rect.Left, Rect.Top, StatusesList.Items[Index]);
+    end;
     end;
   end;
 

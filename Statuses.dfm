@@ -3,7 +3,7 @@ object StatusesForm: TStatusesForm
   Top = 0
   BorderStyle = bsDialog
   Caption = #1057#1090#1072#1090#1091#1089#1099
-  ClientHeight = 389
+  ClientHeight = 263
   ClientWidth = 900
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -576,25 +576,28 @@ object StatusesForm: TStatusesForm
     OnClick = btnSaveStatusClick
   end
   object Label1: TLabel
-    Left = 560
-    Top = 112
+    Left = 536
+    Top = 88
     Width = 31
     Height = 13
     Caption = 'Label1'
+    Visible = False
   end
   object Label2: TLabel
-    Left = 416
-    Top = 172
+    Left = 536
+    Top = 107
     Width = 31
     Height = 13
     Caption = 'Label2'
+    Visible = False
   end
   object Label3: TLabel
-    Left = 72
-    Top = 296
+    Left = 824
+    Top = 124
     Width = 31
     Height = 13
     Caption = 'Label3'
+    Visible = False
   end
   object StatusesList: TListBox
     Left = 8
@@ -643,50 +646,34 @@ object StatusesForm: TStatusesForm
     OnSelect = codesListSelect
   end
   object Memo1: TMemo
-    Left = 652
-    Top = 88
-    Width = 185
-    Height = 89
+    Left = 477
+    Top = 143
+    Width = 43
+    Height = 41
     Lines.Strings = (
-      'Memo1')
+      'Memo'
+      '1')
     TabOrder = 3
+    Visible = False
   end
   object Memo2: TMemo
-    Left = 652
-    Top = 263
+    Left = 604
+    Top = 84
     Width = 185
     Height = 118
     Lines.Strings = (
       'Memo2')
     TabOrder = 4
+    Visible = False
   end
   object Memo3: TMemo
-    Left = 335
-    Top = 263
-    Width = 185
-    Height = 118
+    Left = 439
+    Top = 88
+    Width = 81
+    Height = 49
     Lines.Strings = (
       'Memo3')
     TabOrder = 5
-  end
-  object statusesUDS: TUniDataSource
-    Left = 448
-    Top = 120
-  end
-  object UniQuery1: TUniQuery
-    SQL.Strings = (
-      'select * from order_status')
-    Left = 416
-    Top = 120
-  end
-  object codesUQ: TUniQuery
-    SQL.Strings = (
-      'select * from "dct_ImmutableSalesFunnelStatuses";')
-    Left = 864
-    Top = 272
-  end
-  object codeUDS: TUniDataSource
-    Left = 480
-    Top = 120
+    Visible = False
   end
 end
