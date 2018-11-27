@@ -13,10 +13,14 @@ uses
   VclTee.TeEngine, VclTee.Series, VclTee.TeeProcs, VclTee.Chart,
   DBGridEhGrouping, ToolCtrlsEh, DBGridEhToolCtrls, DynVarsEh, EhLibVCL,
   GridsEh, DBAxisGridsEh, DBGridEh, DateUtils, Vcl.OleCtrls, SHDocVw, activex,
-  mshtml, ComObj,
-  Vcl.Imaging.pngimage, Vcl.Imaging.jpeg, PostgreSQLUniProvider,
-  Generics.Collections, Generics.Defaults,
-  cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxCustomData,
+  mshtml, ComObj, Vcl.Imaging.pngimage, Vcl.Imaging.jpeg, PostgreSQLUniProvider,
+  Generics.Collections, Generics.Defaults, unit3, ThumbnailList, Vcl.ImgList,
+   Math, Statuses, Vcl.Buttons, Dictionary, sSpeedButton,  acImage,
+  dxGDIPlusClasses;
+
+
+
+ { cxGraphics, cxControls, cxLookAndFeels, cxLookAndFeelPainters, cxCustomData,
   cxStyles, cxTL, cxTLdxBarBuiltInMenu, dxSkinsCore, dxSkinBlack, dxSkinBlue,
   dxSkinBlueprint, dxSkinCaramel, dxSkinCoffee, dxSkinDarkRoom, dxSkinDarkSide,
   dxSkinDevExpressDarkStyle, dxSkinDevExpressStyle, dxSkinFoggy,
@@ -32,9 +36,8 @@ uses
   dxSkinTheAsphaltWorld, dxSkinsDefaultPainters, dxSkinValentine,
   dxSkinVisualStudio2013Blue, dxSkinVisualStudio2013Dark,
   dxSkinVisualStudio2013Light, dxSkinVS2010, dxSkinWhiteprint,
-  dxSkinXmas2008Blue, cxInplaceContainer, unit3, ThumbnailList, Vcl.ImgList,
-  dxGDIPlusClasses, Math, Statuses, Vcl.Buttons, Dictionary, sSpeedButton,
-  acImage;
+  dxSkinXmas2008Blue, cxInplaceContainer,   dxGDIPlusClasses,  }
+
 
 type
 
@@ -272,6 +275,8 @@ type
     procedure FirstOrder();
     procedure FirstClient();
     procedure dbSet();
+    procedure noClientsTurnAllOff();
+    procedure moreThanOneClientTurnAllOn();
     procedure PaintFunnelImage(List1 :TListBox; Control: TWinControl; Index: Integer; Rect: TRect; listType: Integer);
 
 
@@ -1876,7 +1881,9 @@ begin
   UniQuery3.ExecSQL;
 
   JobsDictionary := TDictionary<Integer, Integer>.Create;
+
   // Создаем Dictionary для хранения пар для списков типа работ
+
   statusDictionary := TDictionary<Integer, Integer>.Create;
   // Создаем Dictionary для хранения видов статусов
 
@@ -1940,38 +1947,13 @@ begin
   if (clientsRecCount = 0) then
   begin
 
-    // Customer.Items.AddObject('Добавьте Клиентов', TObject(0));
-    // Customer.ItemIndex := 0;
-    // Customer.Enabled:=false;
+    noClientsTurnAllOff();
 
-    DBEdit1.Enabled := true;
-    Button9.Enabled := FALSE;
-    Button11.Enabled := FALSE;
-    Button10.Enabled := FALSE;
-    Button12.Enabled := FALSE;
-    Button4.Enabled := FALSE;
-    Button2.Enabled := FALSE;
-    Button3.Enabled := true;
-    SaveBtn.Enabled := true;
-    Edit1.Enabled := FALSE;
-    Edit2.Enabled := FALSE;
-    Button6.Enabled := true;
-    editBtn.Enabled := FALSE;
-    deleteBtn.Enabled := FALSE;
-    Button1.Enabled := FALSE;
-    LastButton.Enabled := FALSE;
-
-    // TabSheet2.TabVisible := false;
-    OrderTab.TabVisible := FALSE;
-    SenderTab.TabVisible := FALSE;
-    ReportTab.TabVisible := FALSE;
-    UserTab.TabVisible := FALSE;
-    MainTab.TabIndex := 1;
 
   end
   else
   begin
-
+    moreThanOneClientTurnAllOn();
     SetLength(CustomerArr, clientsRecCount);
 
     UniDataSource6.DataSet.First;
@@ -3087,6 +3069,61 @@ end;
 
 end;
 
+procedure TForm1.moreThanOneClientTurnAllOn;
+begin
+DBEdit1.Enabled := false;
+    Button9.Enabled := true;
+    Button11.Enabled := true;
+    Button10.Enabled := true;
+    Button12.Enabled := true;
+    Button4.Enabled := true;
+    Button2.Enabled := true;
+    Button3.Enabled := FALSE;
+    SaveBtn.Enabled := FALSE;
+    Edit1.Enabled := true;
+    Edit2.Enabled := true;
+    Button6.Enabled := FALSE;
+    editBtn.Enabled := true;
+    deleteBtn.Enabled := true;
+    Button1.Enabled := true;
+    LastButton.Enabled := true;
+    OrderTab.TabVisible := true;
+    SenderTab.TabVisible := true;
+    ReportTab.TabVisible := true;
+    UserTab.TabVisible := true;
+    SalesFunnel.TabVisible := true;
+    MainTab.TabIndex := 1;
+end;
+
+procedure TForm1.noClientsTurnAllOff;
+begin
+
+    DBEdit1.Enabled := true;
+    Button9.Enabled := FALSE;
+    Button11.Enabled := FALSE;
+    Button10.Enabled := FALSE;
+    Button12.Enabled := FALSE;
+    Button4.Enabled := FALSE;
+    Button2.Enabled := FALSE;
+    Button3.Enabled := true;
+    SaveBtn.Enabled := true;
+    Edit1.Enabled := FALSE;
+    Edit2.Enabled := FALSE;
+    Button6.Enabled := true;
+    editBtn.Enabled := FALSE;
+    deleteBtn.Enabled := FALSE;
+    Button1.Enabled := FALSE;
+    LastButton.Enabled := FALSE;
+    OrderTab.TabVisible := FALSE;
+    SenderTab.TabVisible := FALSE;
+    ReportTab.TabVisible := FALSE;
+    UserTab.TabVisible := FALSE;
+    SalesFunnel.TabVisible := FALSE;
+    MainTab.TabIndex := 1;
+
+
+end;
+
 procedure TForm1.noOptions;
 begin
   Form3.OptionsExists:=false;
@@ -3196,16 +3233,7 @@ begin
   UniQuery4.Execute;
   LCount := 0;
 
-  while not UniQuery4.Eof do
-  begin
-    for i := 0 to UniQuery4.Fields.Count - 1 do
-      strVar := strVar + VarToStr(UniQuery4.Fields[i].value) + ', ';
-      LCount := LCount + 1;
-     UniQuery4.Next;
-  end;
-  strVar := VarToStr(UniQuery4.Fields[0].value) + ', ';
-
-  If LCount > 0 then
+  If UniQuery4.RecordCount > 0 then
   begin
 
 
@@ -3248,6 +3276,7 @@ procedure TForm1.Button6Click(Sender: TObject);
 
 begin
 RequestDBData();
+act();
 UpdateForm();
 
 end;
@@ -4437,12 +4466,45 @@ begin
  begin
     Form1.UniConnection1.Close;
 		Form1.UniConnection1.ProviderName := 'PostgreSQL';
-		Form1.UniConnection1.Server := 'localhost';
+		Form1.UniConnection1.Server := '84.47.161.121';
 		Form1.UniConnection1.Port := 5432;
 		Form1.UniConnection1.Database := 'postgres';
 		Form1.UniConnection1.Username := 'postgres';
 		Form1.UniConnection1.Password := '1741';
-		UniConnection1.Open;
+
+    try
+    			try
+        		UniConnection1.Open;
+          except
+          end;
+          finally
+            // Если провалился коннект к серверу 84-му  - коннектимся к локалке
+            if (UniConnection1.Connected=false) then
+            begin
+
+              Form1.UniConnection1.Close;
+              Form1.UniConnection1.ProviderName := 'PostgreSQL';
+              Form1.UniConnection1.Server := 'localhost';
+              Form1.UniConnection1.Port := 5432;
+              Form1.UniConnection1.Database := 'postgres';
+              Form1.UniConnection1.Username := 'postgres';
+              Form1.UniConnection1.Password := '1741';
+
+              try
+                try
+                  UniConnection1.Open;
+                  except
+                  end;
+                  finally
+                   // Если провалился коннект ко всему (уже и к локальному)
+                   if (UniConnection1.Connected=false) then
+                   begin
+                     ShowMessage('Подключение к какой либо БД (пользовательской, локальной, серверной - отсутствует!');
+                     Application.Terminate;
+                   end;
+                end;
+              end;
+    end;
  end;
 
 // -----------------------

@@ -2250,7 +2250,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = UserTab
+    ActivePage = SalesFunnel
     TabOrder = 0
     TabStop = False
     object TabSheet3: TTabSheet
