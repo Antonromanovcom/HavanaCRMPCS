@@ -2250,7 +2250,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = OrderTab
+    ActivePage = UserTab
     TabOrder = 0
     TabStop = False
     object TabSheet3: TTabSheet
@@ -7329,8 +7329,6 @@ object Form1: TForm1
       Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
       ImageIndex = 7
       OnShow = SenderTabShow
-      ExplicitLeft = 1
-      ExplicitTop = 29
       object Image4: TImage
         Left = 19
         Top = 19
@@ -20147,6 +20145,10 @@ object Form1: TForm1
       end
       item
         Text = #1056#1077#1078#1080#1084': '#1057#1058#1040#1053#1044#1040#1056#1058
+        Width = 200
+      end
+      item
+        Text = #1041#1044':'
         Width = 50
       end>
   end

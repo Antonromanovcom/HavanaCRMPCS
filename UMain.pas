@@ -271,6 +271,7 @@ type
     procedure EnableOnOrdButtons();
     procedure FirstOrder();
     procedure FirstClient();
+    procedure dbSet();
     procedure PaintFunnelImage(List1 :TListBox; Control: TWinControl; Index: Integer; Rect: TRect; listType: Integer);
 
 
@@ -280,6 +281,7 @@ type
     loginbefore: Boolean;
     loginglobal: String;
     passwordglobal: String;
+    db: String;
     UserID: string;
     CustomerArr: array of Integer;
     FIsStartPage: Boolean;
@@ -290,11 +292,9 @@ type
     function findIDByJob(b: Integer): Integer;
     function findStatusByID(b: Integer): Integer;
     function findIDByStatus(a: Integer): Integer;
-
     function findOrderTupeByID(i: Integer): String;
     function findOrderSubTypeByID(i: Integer): String;
     function findOrderPlanByID(i: Integer): String;
-
     procedure getOptions4Plan(plan: Integer);
     procedure noOptions();
     procedure clearOptionList();
@@ -2031,6 +2031,9 @@ begin
   orderstatus.ItemIndex := 0;
   Jobstype.ItemIndex := 0;
 
+  // Определяем и ставим текущюю БД
+  Form1.dbSet();
+
 end;
 
 procedure TForm1.Activate;
@@ -3271,9 +3274,6 @@ var
 begin
 
 
-  // StringGrid2.RowCount:=0;
-  // StringGrid2.ColCount:=0;
-
   for i := 0 to StringGrid2.RowCount - 1 do
     StringGrid2.Rows[i].Clear;
 
@@ -3856,14 +3856,9 @@ begin
 
   if Button = nbInsert then
   begin
-    ShowMessage('SUKA');
-    // DBEdit6.Field.Value := 1;
+
     myDate := Date;
     myTime := Time;
-
-    // ShowMessage('myDate = ' + datetostr(myDate));
-    // ShowMessage('myTime = ' + TimeToStr(myTime));
-    // dbeClorderedDate.Field.value := datetostr(myDate) + ' ' + TimeToStr(myTime);
 
     DBEdit6.Field.value := 1;
   end;
@@ -3874,12 +3869,31 @@ begin
     myDate := Date;
     myTime := Time;
 
-    // ShowMessage('myDate = ' + datetostr(myDate));
-    // ShowMessage('myTime = ' + TimeToStr(myTime));
-    // dbeClorderedDate.Field.value := datetostr(myDate) + ' ' + TimeToStr(myTime);
     DBEdit6.Field.value := 1;
 
   end;
+
+end;
+
+procedure TForm1.dbSet;
+begin
+
+
+
+if (Form1.UniConnection1.Server = 'localhost') then
+begin
+  Form1.db := 'LOCAL';
+end
+else if (Form1.UniConnection1.Server = '84.47.161.121') then
+begin
+  Form1.db := 'SERVER';
+end
+else
+begin
+  Form1.db := 'USER';
+end;
+
+StatusBar1.Panels[3].Text := 'БД: ' + Form1.db;
 
 end;
 
@@ -4348,14 +4362,14 @@ begin
 	if IniFile.SectionExists('ConnectData') then
 	begin
 
-// Читаем данные из файла ini
-	user := IniFile.ReadString('ConnectData', 'User', 'ErrorIniFileReadingL!');
-  pw := IniFile.ReadString('ConnectData', 'PW', 'ErrorIniFileReadingP!');
-	port := StrToInt(IniFile.ReadString('ConnectData', 'Port', 'ErrorIniFileReadingP!'));
-	server := IniFile.ReadString('ConnectData', 'Server', 'ErrorIniFileReadingP!');
-	db := IniFile.ReadString('ConnectData', 'DB', 'ErrorIniFileReadingP!');
+    // Читаем данные из файла ini
+  	user := IniFile.ReadString('ConnectData', 'User', 'ErrorIniFileReadingL!');
+    pw := IniFile.ReadString('ConnectData', 'PW', 'ErrorIniFileReadingP!');
+  	port := StrToInt(IniFile.ReadString('ConnectData', 'Port', 'ErrorIniFileReadingP!'));
+	  server := IniFile.ReadString('ConnectData', 'Server', 'ErrorIniFileReadingP!');
+  	db := IniFile.ReadString('ConnectData', 'DB', 'ErrorIniFileReadingP!');
 
-
+    // Готовимся к конекшену
 		Form1.UniConnection1.Close;
 		Form1.UniConnection1.ProviderName := 'PostgreSQL';
 		Form1.UniConnection1.Server := server;
@@ -4371,19 +4385,52 @@ begin
 			end;
 			finally
 
+      // Если провалился коннект по заполненным в файле кренденшиалам - коннектимся к удаленной машине
 			if (UniConnection1.Connected=false) then
 			begin
 
-    Form1.UniConnection1.Close;
-		Form1.UniConnection1.ProviderName := 'PostgreSQL';
-		Form1.UniConnection1.Server := 'localhost';
-		Form1.UniConnection1.Port := 5432;
-		Form1.UniConnection1.Database := 'postgres';
-		Form1.UniConnection1.Username := 'postgres';
-		Form1.UniConnection1.Password := '1741';
-		UniConnection1.Open;
+        Form1.UniConnection1.Close;
+		    Form1.UniConnection1.ProviderName := 'PostgreSQL';
+    		Form1.UniConnection1.Server := '84.47.161.121';
+		    Form1.UniConnection1.Port := 5432;
+    		Form1.UniConnection1.Database := 'postgres';
+		    Form1.UniConnection1.Username := 'postgres';
+    		Form1.UniConnection1.Password := '1741';
 
-			end;
+        try
+    			try
+        		UniConnection1.Open;
+          except
+          end;
+          finally
+            // Если провалился коннект к серверу 84-му  - коннектимся к локалке
+            if (UniConnection1.Connected=false) then
+            begin
+
+              Form1.UniConnection1.Close;
+              Form1.UniConnection1.ProviderName := 'PostgreSQL';
+              Form1.UniConnection1.Server := 'localhost';
+              Form1.UniConnection1.Port := 5432;
+              Form1.UniConnection1.Database := 'postgres';
+              Form1.UniConnection1.Username := 'postgres';
+              Form1.UniConnection1.Password := '1741';
+
+              try
+                try
+                  UniConnection1.Open;
+                  except
+                  end;
+                  finally
+                   // Если провалился коннект ко всему (уже и к локальному)
+                   if (UniConnection1.Connected=false) then
+                   begin
+                     ShowMessage('Подключение к какой либо БД (пользовательской, локальной, серверной - отсутствует!');
+                     Application.Terminate;
+                   end;
+                end;
+              end;
+          end;
+			  end;
 		end;
  end
  else
