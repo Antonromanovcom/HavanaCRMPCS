@@ -2250,7 +2250,7 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = SalesFunnel
+    ActivePage = SenderTab
     TabOrder = 0
     TabStop = False
     object TabSheet3: TTabSheet
@@ -7326,7 +7326,7 @@ object Form1: TForm1
       end
     end
     object SenderTab: TTabSheet
-      Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
+      Caption = #1055#1086#1076#1082#1083#1102#1095#1077#1085#1080#1077
       ImageIndex = 7
       OnShow = SenderTabShow
       object Image4: TImage
