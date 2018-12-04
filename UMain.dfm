@@ -14,7 +14,6 @@ object Form1: TForm1
   Font.Style = []
   KeyPreview = True
   OldCreateOrder = False
-  OnActivate = FormActivate
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   PixelsPerInch = 96
@@ -2250,13 +2249,17 @@ object Form1: TForm1
     Top = 71
     Width = 866
     Height = 417
-    ActivePage = UserTab
+    ActivePage = SenderTab
     TabOrder = 0
     TabStop = False
     object TabSheet3: TTabSheet
       Caption = #1042#1093#1086#1076
       ImageIndex = 2
       OnShow = TabSheet3Show
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image2: TImage
         Left = 3
         Top = 16
@@ -5931,6 +5934,10 @@ object Form1: TForm1
       Caption = #1050#1083#1080#1077#1085#1090#1099' ('#1090#1072#1073#1083#1080#1094#1072')'
       ImageIndex = 1
       OnShow = TabSheet2Show
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object DBGrid1: TDBGrid
         Left = 3
         Top = 3
@@ -6221,6 +6228,10 @@ object Form1: TForm1
       Caption = #1055#1086#1083#1100#1079#1086#1074#1072#1090#1077#1083#1100
       ImageIndex = 5
       OnShow = UserTabShow
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object Image1: TImage
         Left = 11
         Top = 11
@@ -7110,6 +7121,10 @@ object Form1: TForm1
       Enabled = False
       ImageIndex = 6
       OnShow = ReportTabShow
+      ExplicitLeft = 0
+      ExplicitTop = 0
+      ExplicitWidth = 0
+      ExplicitHeight = 0
       object PageControl1: TPageControl
         Left = 9
         Top = 16
@@ -7121,6 +7136,10 @@ object Form1: TForm1
         TabPosition = tpLeft
         object TabSheet4: TTabSheet
           Caption = #1052#1077#1089#1103#1094
+          ExplicitLeft = 0
+          ExplicitTop = 0
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object StringGrid2: TStringGrid
             Left = 9
             Top = 6
@@ -7155,6 +7174,10 @@ object Form1: TForm1
         object TabSheet5: TTabSheet
           Caption = #1043#1086#1076
           ImageIndex = 1
+          ExplicitLeft = 0
+          ExplicitTop = 0
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object rptlblYearStatistic: TLabel
             Left = 10
             Top = 147
@@ -7280,6 +7303,10 @@ object Form1: TForm1
         object TabSheet6: TTabSheet
           Caption = #1048#1090#1086#1075#1086
           ImageIndex = 2
+          ExplicitLeft = 0
+          ExplicitTop = 0
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object StringGrid3: TStringGrid
             Left = 57
             Top = 32
@@ -7326,7 +7353,7 @@ object Form1: TForm1
       end
     end
     object SenderTab: TTabSheet
-      Caption = #1054' '#1087#1088#1086#1075#1088#1072#1084#1084#1077
+      Caption = #1055#1086#1076#1082#1083#1102#1095#1077#1085#1080#1077
       ImageIndex = 7
       OnShow = SenderTabShow
       object Image4: TImage
