@@ -197,7 +197,6 @@ type
     btnDisconnect: TsSpeedButton;
 
     procedure Activate();
-    procedure FormActivate(Sender: TObject);
     procedure DBNavigator1Click(Sender: TObject; Button: TNavigateBtn);
     procedure LastButtonClick(Sender: TObject);
     procedure Button4Click(Sender: TObject);
@@ -4209,158 +4208,18 @@ begin
 
 end;
 
-procedure TForm1.FormActivate(Sender: TObject);
-
-{ var
-  j: Integer;
-  z: Integer;
-  fromRecCount: Integer;
-  statusRecCount: Integer;
-  jobstypeRecCount: Integer;
-
-  sItem: String;
-  sItem2: String;
-  sItemHelp: String;
-}
-begin
-  {
-    UniQuery2.ExecSQL;
-    UniQuery3.ExecSQL;
-
-    // =============================== COMBO BOX STATUS FILLING ================
-    statusRecCount := UniDataSource2.DataSet.RecordCount;
-    UniDataSource2.DataSet.First;
-    for j := 1 to statusRecCount do
-    begin
-
-    sItem :=  UniDataSource2.DataSet.FieldByName('STATUS_TYPE').AsString;
-    sItemHelp := Format(sItem, [j]);
-    //ShowMessage(sItemHelp);
-    UniDataSource2.DataSet.Next;
-    ComboBox1.Items.AddObject(sItem, TObject(j));
-    end;
-    UniDataSource2.DataSet.First;
-    ComboBox1.ItemIndex :=0;
-
-    // =============================== COMBO BOX CLIENT FROM FILLING ================
-    fromRecCount := UniDataSource3.DataSet.RecordCount;
-    UniDataSource3.DataSet.First;
-    for z := 1 to fromRecCount do
-    begin
-
-    sItem2 :=  UniDataSource3.DataSet.FieldByName('FROM_TYPE').AsString;
-    // ShowMessage(inttostr(z) + ' = ' + sItem2);
-    sItemHelp := Format(sItem, [z]);
-    // ShowMessage(sItemHelp);
-    UniDataSource3.DataSet.Next;
-    ComboBox2.Items.AddObject(sItem2, TObject(z));
-    end;
-    // =============================== COMBO BOX ORDER STATUS FROM FILLING ==========
-    //statusRecCount := UniDataSource2.DataSet.RecordCount;
-
-
-    UniDataSource2.DataSet.First;
-    j:=0;
-    sItem:='';
-    for j := 1 to statusRecCount do
-    begin
-
-    sItem :=  UniDataSource2.DataSet.FieldByName('STATUS_TYPE').AsString;
-    sItemHelp := Format(sItem, [j]);
-    //ShowMessage(sItemHelp);
-    UniDataSource2.DataSet.Next;
-    orderstatus.Items.AddObject(sItem, TObject(j));
-    end;
-
-    // =============================== COMBO BOX CLIENT FROM FILLING ==========
-
-    UniQuery8.SQL.Text :='SELECT * FROM clients WHERE User = :userid;';
-    UniQuery8.ParamByName('userid').AsString := UserID;
-
-    UniQuery8.Execute;
-
-    clientsRecCount:= UniDataSource6.DataSet.RecordCount;
-
-    SetLength(CustomerArr, clientsRecCount);
-
-    UniDataSource6.DataSet.First;
-    j:=0;
-    //z := cube(3);
-    //showMessage(inttostr(z));
-
-    z :=0;
-    sItem:='';
-
-    for j := 0 to clientsRecCount do
-    begin
-
-    sItem :=  UniDataSource6.DataSet.FieldByName('Name').AsString;
-    z := UniDataSource6.DataSet.FieldByName('ID_clients').AsInteger;
-    //ShowMessage(inttostr(j) + ' - ' + inttostr(z) + ' - ' + sItem);
-    // ListBox2.Items.Add(inttostr(j) + ' - ' + inttostr(z) + ' - ' + sItem);
-
-    // sItemHelp := Format(sItem, [j]);
-    // ShowMessage(sItemHelp);
-
-    CustomerArr[j] :=  z;
-
-    Customer.Items.AddObject(sItem, TObject(j));
-    UniDataSource6.DataSet.Next;
-
-    end;
-
-
-
-
-    // =============================== COMBO BOX JOBS TYPE FILLING ==========
-
-    UniQuery9.SQL.Text :='SELECT * FROM ordertypes;';
-    //UniQuery8.ParamByName('userid').AsString := UserID;
-    UniQuery9.Execute;
-
-    jobstypeRecCount:= UniDataSource7.DataSet.RecordCount;
-    UniDataSource7.DataSet.First;
-    j:=0;
-    sItem:='';
-
-    for j := 1 to jobstypeRecCount do
-    begin
-
-    sItem :=  UniDataSource7.DataSet.FieldByName('Jobtype').AsString;
-    sItemHelp := Format(sItem, [j]);
-    //ShowMessage(sItemHelp);
-    UniDataSource7.DataSet.Next;
-    Jobstype.Items.AddObject(sItem, TObject(j));
-    end;
-
-    UniDataSource2.DataSet.First;
-    ComboBox1.ItemIndex :=0;
-
-    UniDataSource3.DataSet.First;
-    ComboBox2.ItemIndex :=0;
-
-    UniDataSource6.DataSet.First;
-    UniDataSource7.DataSet.First;
-    Customer.ItemIndex :=0;
-    orderstatus.ItemIndex :=0;
-    Jobstype.ItemIndex :=0;
-
-  }
-
-end;
-
 procedure TForm1.FormCreate(Sender: TObject);
 var
   log: string;
   test2: string;
   pass: string;
   Result1: string;
-LCount, port: Integer;
+  LCount, port: Integer;
   i: Integer;
-strVar, filePath, user, pw, server, db: string;
+  strVar, filePath, user, pw, server, db: string;
   Login: string;
   Password: string;
-
+  AFlag: Boolean; //  Добавил (Евгений)
   signinDate: TDateTime;
   signinTime: TDateTime;
   finalsigninDate: string;
@@ -4388,8 +4247,8 @@ begin
     filePath := ExtractFilePath(Application.ExeName) + 'login.ini';
     IniFile := TIniFile.Create(filePath);
 
-	if IniFile.SectionExists('ConnectData') then
-	begin
+if IniFile.SectionExists('ConnectData') then
+begin
 
     // Читаем данные из файла ini
   	user := IniFile.ReadString('ConnectData', 'User', 'ErrorIniFileReadingL!');
@@ -4407,17 +4266,22 @@ begin
 		Form1.UniConnection1.Username := user;
 		Form1.UniConnection1.Password := pw;
 
-		try
-			try
-				UniConnection1.Open;
-				except
-			end;
-			finally
 
-      // Если провалился коннект по заполненным в файле кренденшиалам - коннектимся к удаленной машине
-			if (UniConnection1.Connected=false) then
-			begin
+  //  Пробуем подключиться к БД по пользовательским креденшиалам (Антон)
+  try
+    Form1.UniConnection1.Connect;
+    AFlag := True;  //  Есть подключение к БД по креденшиалам
+  except on E: Exception do
+    begin
+      AFlag :=False; //Подключение к БД по креденшиалам нет.
+    end;
+  end;
 
+
+  // Если провалился коннект по заполненным в файле кренденшиалам - коннектимся к удаленной машине
+  if AFlag = False then
+  begin
+    try
         Form1.UniConnection1.Close;
 		    Form1.UniConnection1.ProviderName := 'PostgreSQL';
     		Form1.UniConnection1.Server := '84.47.161.121';
@@ -4425,45 +4289,46 @@ begin
     		Form1.UniConnection1.Database := 'postgres';
 		    Form1.UniConnection1.Username := 'postgres';
     		Form1.UniConnection1.Password := '1741';
+        Form1.UniConnection1.Connect;
+        AFlag := True;
+    except on E: Exception do
+    begin
+           AFlag := False;
+    end;
+    end;
+  end;
 
-        try
-    			try
-        		UniConnection1.Open;
-          except
-          end;
-          finally
-            // Если провалился коннект к серверу 84-му  - коннектимся к локалке
-            if (UniConnection1.Connected=false) then
-            begin
+  // Если провалился коннект к серверу 84-му  - коннектимся к локалке
+  if AFlag = False then
+  begin
+    try
+        Form1.UniConnection1.Close;
+        Form1.UniConnection1.ProviderName := 'PostgreSQL';
+        Form1.UniConnection1.Server := 'localhost';
+        Form1.UniConnection1.Port := 5432;
+        Form1.UniConnection1.Database := 'postgres';
+        Form1.UniConnection1.Username := 'postgres';
+        Form1.UniConnection1.Password := '1741';
+        AFlag := True;
+    except on E: Exception do
+    begin
+        AFlag := False;
+    end;
+    end;
+  end;
 
-              Form1.UniConnection1.Close;
-              Form1.UniConnection1.ProviderName := 'PostgreSQL';
-              Form1.UniConnection1.Server := 'localhost';
-              Form1.UniConnection1.Port := 5432;
-              Form1.UniConnection1.Database := 'postgres';
-              Form1.UniConnection1.Username := 'postgres';
-              Form1.UniConnection1.Password := '1741';
+  if AFlag = False then
+  begin
+    ShowMessage('Мы не можем подключиться к локальной и удаленной БД. Программа заверширт свою работу сейчас.');
+    Application.Terminate;
+  end;
 
-              try
-                try
-                  UniConnection1.Open;
-                  except
-                  end;
-                  finally
-                   // Если провалился коннект ко всему (уже и к локальному)
-                   if (UniConnection1.Connected=false) then
-                   begin
-                     ShowMessage('Подключение к какой либо БД (пользовательской, локальной, серверной - отсутствует!');
-                     Application.Terminate;
-                   end;
-                end;
-              end;
-          end;
-			  end;
-		end;
- end
- else
- begin
+//***********************************************************//
+
+end
+else
+begin
+
     Form1.UniConnection1.Close;
 		Form1.UniConnection1.ProviderName := 'PostgreSQL';
 		Form1.UniConnection1.Server := '84.47.161.121';
@@ -4472,38 +4337,40 @@ begin
 		Form1.UniConnection1.Username := 'postgres';
 		Form1.UniConnection1.Password := '1741';
 
-    try
-    			try
-        		UniConnection1.Open;
-          except
-          end;
-          finally
-            // Если провалился коннект к серверу 84-му  - коннектимся к локалке
-            if (UniConnection1.Connected=false) then
-            begin
+    // Пробуем подключиться к удаленной БД
+		try
+			Form1.UniConnection1.Connect;
+			AFlag := True;  //  Есть подключение к удаленной БД
+			except on E: Exception do
+			begin
+				AFlag :=False; //Подключение к БД по креденшиалам нет.
+			end;
+		end;
 
-              Form1.UniConnection1.Close;
-              Form1.UniConnection1.ProviderName := 'PostgreSQL';
-              Form1.UniConnection1.Server := 'localhost';
-              Form1.UniConnection1.Port := 5432;
-              Form1.UniConnection1.Database := 'postgres';
-              Form1.UniConnection1.Username := 'postgres';
-              Form1.UniConnection1.Password := '1741';
+    // Если провалился коннект к серверу 84-му  - коннектимся к локалке
+    if AFlag = False then
+    begin
+      Form1.UniConnection1.Close;
+      Form1.UniConnection1.ProviderName := 'PostgreSQL';
+      Form1.UniConnection1.Server := 'localhost';
+      Form1.UniConnection1.Port := 5432;
+      Form1.UniConnection1.Database := 'postgres';
+      Form1.UniConnection1.Username := 'postgres';
+      Form1.UniConnection1.Password := '1741';
 
-              try
-                try
-                  UniConnection1.Open;
-                  except
-                  end;
-                  finally
-                   // Если провалился коннект ко всему (уже и к локальному)
-                   if (UniConnection1.Connected=false) then
-                   begin
-                     ShowMessage('Подключение к какой либо БД (пользовательской, локальной, серверной - отсутствует!');
-                     Application.Terminate;
-                   end;
-                end;
-              end;
+      try
+        Form1.UniConnection1.Connect;
+        AFlag := True;  //  Есть подключение к локальной БД
+      except on E: Exception do
+      begin
+        AFlag :=False; //Подключение к локальной БД нет.
+      end;
+      end;
+    end;
+    if AFlag = False then
+    begin
+      ShowMessage('Мы не можем подключиться к локальной или удаленной БД. Программа заверширт свою работу сейчас.');
+      Application.Terminate;
     end;
  end;
 
@@ -4581,9 +4448,8 @@ begin
     ReportTab.TabVisible := FALSE;
     UserTab.TabVisible := FALSE;
     SalesFunnel.TabVisible  := FALSE;
-    PageControl1.ActivePage := TabSheet3;
-
-
+   // PageControl1.ActivePage := TabSheet3;
+    MainTab.ActivePageIndex:=0;
 
   end;
 
